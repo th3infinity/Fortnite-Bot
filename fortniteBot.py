@@ -180,12 +180,13 @@ async def matchMin(ctx, number=-1):
 @commands.check(is_allowed)
 async def setup(ctx, botspamID: commands.TextChannelConverter, logChannelID: commands.TextChannelConverter, tournamentChannelID: commands.TextChannelConverter ):
 
-    guildId = str(ctx.message.guild.id)
-    if guildId in botDatabase:
-        botDatabase[guildId]['botspamID'] = botspamID.id
-        botDatabase[guildId]['logChannelID'] = logChannelID.id
+    guildID = str(ctx.message.guild.id)
+    if guildID in botDatabase:
+        botDatabase[guildID]['botspamID'] = botspamID.id
+        botDatabase[guildID]['logChannelID'] = logChannelID.id
+        botDatabase[guildID]['tournamentChannelID'] = tournamentChannelID.id
     else:
-        botDatabase[guildId] = {'botspamID': botspamID.id, 'logChannelID': logChannelID.id, 'tournamentChannelID': tournamentChannelID.id, 'allowedChannels': [], 'modRoles': [], 'umg_posted': [], 'egl_posted': [], 'blacklist': [], 'minGames': 200, 'nameDatabase': {}}
+        botDatabase[guildID] = {'botspamID': botspamID.id, 'logChannelID': logChannelID.id, 'tournamentChannelID': tournamentChannelID.id, 'allowedChannels': [], 'modRoles': [], 'umg_posted': [], 'egl_posted': [], 'blacklist': [], 'minGames': 200, 'nameDatabase': {}}
     saveDatabase()
     embed = discord.Embed(title='Bot Setup',description='Bot erfolgreich eingerichtet!', color=0x00FF00)
     embed.set_footer(text='made with <3 by th3infinity#6720')
@@ -1141,7 +1142,8 @@ async def on_ready():
     embed.add_field(name='Last Updated', value=lastupdated)
     embed.set_footer(text='made with <3 by th3infinity#6720')
     for guildID in botDatabase:
-        await (bot.get_channel(botDatabase[guildID]['botspamID'])).send(embed=embed)
+        if guildID not in ['testToken', 'realToken', 'trnKey']:
+            await (bot.get_channel(botDatabase[guildID]['botspamID'])).send(embed=embed)
 
 
 bot.run(TOKEN[0])
