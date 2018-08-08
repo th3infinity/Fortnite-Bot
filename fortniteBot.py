@@ -1071,6 +1071,7 @@ async def info(ctx):
     logger.info('Command -info from User: ' + str(ctx.message.author.id))
     embed = discord.Embed(title='Info',
                           description='Fortnite Bot - Autom. WinRate Rollen | Turnier Crawler!',
+                          url="https://github.com/th3infinity/Fortnite-Bot",
                           color=0x008CFF)
     embed.add_field(name='Developer', value='<@198844841977708545>')
     embed.add_field(name='Version', value=version)
