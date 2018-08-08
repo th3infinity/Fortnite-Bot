@@ -84,9 +84,8 @@ def saveDatabase():
 @bot.command(pass_context=True, name='commandList', aliases=['commandlist', 'cl'], help='Postet eine Liste aller '
                                                                                         'verfügbaren Commands')
 async def commandList(ctx):
-    for rl in ctx.message.author.roles:
-        print(rl.mention)
-    logger.info('Command -commandList from User: ' + str(ctx.message.author.id))
+    guildID = str(ctx.message.guild.id)
+    logger.info('Command -commandList from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
 
     embed_bot = discord.Embed(title='Bot - Commands', description='', color=0x0000FF)
     embed_bot.add_field(name='`-info`', value='Postet Stats Bot Info')
@@ -96,7 +95,7 @@ async def commandList(ctx):
     embed_bot.add_field(name='`-commandList`', value='Postet Liste aller verfügbaren Commands')
 
     ###ModOnly
-    guildID = str(ctx.message.guild.id)
+
     if is_developer(ctx) or (guildID in botDatabase and ctx.message.author.id in botDatabase[guildID]['modRoles']) :
         embed_bot.add_field(name='`-blacklist`', value='Postet die aktuelle Acc Blacklist für Ranks')
         embed_bot.add_field(name='`-addBlacklist <name>`', value='Fügt Namen zur Blacklist hinzu')
@@ -117,6 +116,7 @@ async def maintenance(ctx):
         answer = 'Bot Maintenance wurde aktiviert!'
     else:
         answer = 'Bot Maintenance wurde deaktiviert!'
+    logger.info(answer)
     embed_maint = discord.Embed(title='Maintenance', description=answer, color=0xE88100)
     embed_maint.set_footer(text='made with <3 by th3infinity#6720')
     await ctx.send(embed=embed_maint)
@@ -126,8 +126,9 @@ async def maintenance(ctx):
 @commands.check(is_setup)
 @commands.check(is_allowed)
 async def database(ctx):
-    logger.info('Command -database from User: ' + str(ctx.message.author.id))
     guildID = str(ctx.message.guild.id)
+    logger.info('Command -database from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
+
     with open("database" + guildID + ".txt", "w") as guildDBFile:
         json.dump(botDatabase[guildID]['nameDatabase'], guildDBFile, sort_keys=True)
     guildDBFile.close()
@@ -142,8 +143,9 @@ async def database(ctx):
 @commands.check(is_setup)
 @commands.check(is_allowed)
 async def blacklist(ctx):
-    logger.info('Command -blacklist from User: ' + str(ctx.message.author.id))
     guildID = str(ctx.message.guild.id)
+    logger.info('Command -blacklist from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
+
     blstr = ''
     for blname in botDatabase[guildID]['blacklist']:
         blstr += blname + '\n'
@@ -158,7 +160,7 @@ async def blacklist(ctx):
 @commands.check(is_allowed)
 async def matchMin(ctx, number=-1):
     guildID = str(ctx.message.guild.id)
-    logger.info('Command -matchMin from User: ' + str(ctx.message.author.id))
+    logger.info('Command -matchMin from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
     if number > -1:
         botDatabase[guildID]['minGames'] = int(number)
         saveDatabase()
@@ -179,8 +181,9 @@ async def matchMin(ctx, number=-1):
 @bot.command(hidden=True, pass_context=True, name='setup', aliases=['SETUP', 'Setup'])
 @commands.check(is_allowed)
 async def setup(ctx, botspamID: commands.TextChannelConverter, logChannelID: commands.TextChannelConverter, tournamentChannelID: commands.TextChannelConverter ):
-
     guildID = str(ctx.message.guild.id)
+    logger.info('Command -setup from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
+
     if guildID in botDatabase:
         botDatabase[guildID]['botspamID'] = botspamID.id
         botDatabase[guildID]['logChannelID'] = logChannelID.id
@@ -188,6 +191,7 @@ async def setup(ctx, botspamID: commands.TextChannelConverter, logChannelID: com
     else:
         botDatabase[guildID] = {'botspamID': botspamID.id, 'logChannelID': logChannelID.id, 'tournamentChannelID': tournamentChannelID.id, 'allowedChannels': [], 'modRoles': [], 'umg_posted': [], 'egl_posted': [], 'blacklist': [], 'minGames': 200, 'nameDatabase': {}}
     saveDatabase()
+    logger.info("Server " + ctx.message.guild.name + "(" + guildID + ") successfully setup")
     embed = discord.Embed(title='Bot Setup',description='Bot erfolgreich eingerichtet!', color=0x00FF00)
     embed.set_footer(text='made with <3 by th3infinity#6720')
     await ctx.send(embed=embed)
@@ -207,6 +211,8 @@ async def setup_on_error(ctx, error):
 @commands.check(is_allowed)
 async def allowedChannels(ctx,channel: commands.TextChannelConverter = ''):
     guildID = str(ctx.message.guild.id)
+    logger.info('Command -allowedChannels from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
+
     embed = discord.Embed(title='Erlaubte Channel')
     embed.colour = 0x008CFF
     embed.set_footer(text='made with <3 by th3infinity#6720')
@@ -241,6 +247,8 @@ async def allowedChannels(ctx,channel: commands.TextChannelConverter = ''):
 @commands.check(is_allowed)
 async def modRoles(ctx,role: commands.RoleConverter = ''):
     guildID = str(ctx.message.guild.id)
+    logger.info('Command -modRoles from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
+
     embed = discord.Embed(title='Moderatoren')
     embed.colour = 0x008CFF
     embed.set_footer(text='made with <3 by th3infinity#6720')
@@ -274,13 +282,13 @@ async def modRoles(ctx,role: commands.RoleConverter = ''):
 async def addBlacklist(ctx, *name):
     blname = ' '.join(name)
     guildID = str(ctx.message.guild.id)
-    logger.info('Command -addBlacklist from User: ' + str(ctx.message.author.id))
+    logger.info('Command -addBlacklist from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
 
     if blname.lower() in (n.lower() for n in botDatabase[guildID]['blacklist']):
         embed_already = discord.Embed(title='Blacklist',
                                       description='Name **' + blname + '** schon auf der Blacklist!', color=0xFF0000)
         embed_already.set_footer(text='made with <3 by th3infinity#6720')
-        logger.error('name: ' + blname + ' already on blacklist')
+        logger.info('name: ' + blname + ' already on blacklist')
         await ctx.send(embed=embed_already)
     else:
         botDatabase[guildID]['blacklist'].append(blname)
@@ -288,7 +296,7 @@ async def addBlacklist(ctx, *name):
         embed_success = discord.Embed(title='Blacklist',
                                       description='Name **' + blname + '** zur Blacklist hinzugefügt!', color=0x00FF00)
         embed_success.set_footer(text='made with <3 by th3infinity#6720')
-        logger.error('name: ' + blname + ' added to blacklist')
+        logger.info('name: ' + blname + ' added to blacklist')
         await ctx.send(embed=embed_success)
 
 
@@ -306,7 +314,7 @@ async def addBlacklist_on_error(ctx, error):
 async def removeBlacklist(ctx, *name):
     blname = ' '.join(name)
     guildID = str(ctx.message.guild.id)
-    logger.info('Command -removeBlacklist from User: ' + str(ctx.message.author.id))
+    logger.info('Command -removeBlacklist from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
 
     if blname.lower() in (n.lower() for n in botDatabase[guildID]['blacklist']):
         botDatabase[guildID]['blacklist'].remove(blname)
@@ -314,13 +322,13 @@ async def removeBlacklist(ctx, *name):
         embed_success = discord.Embed(title='Blacklist',
                                       description='Name **' + blname + '** von Blacklist gelöscht!', color=0x00FF00)
         embed_success.set_footer(text='made with <3 by th3infinity#6720')
-        logger.error('name: ' + blname + ' deleted from blacklist')
+        logger.info('name: ' + blname + ' deleted from blacklist')
         await ctx.send(embed=embed_success)
     else:
         embed_error = discord.Embed(title='Blacklist',
                                     description='Name **' + blname + '** nicht in der Blacklist!', color=0xFF0000)
         embed_error.set_footer(text='made with <3 by th3infinity#6720')
-        logger.error('name: ' + blname + ' not in blacklist')
+        logger.info('name: ' + blname + ' not in blacklist')
         await ctx.send(embed=embed_error)
 
 
@@ -339,7 +347,7 @@ async def rank(ctx, platform, *all):
     if not maint or is_developer(ctx):
         guildID = str(ctx.message.guild.id)
         name = ' '.join(all)
-        logger.info('Command -rank from User: ' + str(ctx.message.author.id))
+        logger.info('Command -rank from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
         if platform.lower() not in platforms:
             embed_platform = discord.Embed(title='Win Rate Rank',
                                            description='Ungültige Plattform! <' + ', '.join(platforms) + '>', color=0xFF0000)
@@ -528,7 +536,7 @@ async def rank(ctx, platform, *all):
                     #                                  match_min - overall_matches) + ' Matches** in der aktuellen Season und **' + str(
                     #                                  match_min - overall_matches_old) + ' Matches** in der letzten Season!',
                     #                              color=0xFF0000)
-                    logger.error('Not enough Matches ' + str(overall_matches))
+                    logger.info('Not enough Matches ' + str(overall_matches))
                     await ctx.send(embed=embed_matches)
     else:
         embed_maint = discord.Embed(title='Maintenance',
@@ -544,7 +552,7 @@ async def rank(ctx, platform, *all):
 async def autoRank(ctx, roleName):
     if not maint or is_developer(ctx):
         guildID = str(ctx.message.guild.id)
-        logger.info('Command -autoRank from User: ' + str(ctx.message.author.id))
+        logger.info('Command -autoRank from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
         role = discord.utils.get(ctx.message.guild.roles, name=roleName)
         if role is None:
             embed_notfound = discord.Embed(title='Auto Rank', description='Rank: **' + roleName + '** nicht gefunden!', color=0xFF0000)
@@ -711,7 +719,7 @@ async def autoRank(ctx, roleName):
                         #                                  match_min - overall_matches) + ' Matches** in der aktuellen Season und **' + str(
                         #                                  match_min - overall_matches_old) + ' Matches** in der letzten Season!',
                         #                              color=0xFF0000)
-                        logger.error('Not enough Matches ' + str(overall_matches))
+                        logger.info('Not enough Matches ' + str(overall_matches))
                         await ctx.send(embed=embed_matches)
                 else:
                     count_notfound += 1
@@ -892,8 +900,7 @@ async def getTournaments(ctx):
     umg_posted = botDatabase[guildID]["umg_posted"]
     egl_posted = botDatabase[guildID]["egl_posted"]
 
-
-    logger.info('Command -getTournaments from User: ' + str(ctx.message.author.id))
+    logger.info('Command -getTournaments from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
     await ctx.send("Updating Turnier Infos... Das könnte eine Weile dauern!")
     getEGLTournaments()
     getUMGTournaments()
@@ -1068,7 +1075,7 @@ async def exitBot(ctx):
 
 @bot.command(pass_context=True, name='info', aliases=['Info', 'i'], help='Postet eine Info zum Bot')
 async def info(ctx):
-    logger.info('Command -info from User: ' + str(ctx.message.author.id))
+    logger.info('Command -info from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + str(ctx.message.guild.id) + ")")
     embed = discord.Embed(title='Info',
                           description='Fortnite Bot - Autom. WinRate Rollen | Turnier Crawler!',
                           url="https://github.com/th3infinity/Fortnite-Bot",
@@ -1083,7 +1090,7 @@ async def info(ctx):
 @bot.command(pass_context=True, name='changeLog', aliases=['changelog', 'clog'], help='Postet den aktuellen Bot '
                                                                                       'ChangeLog')
 async def changeLog(ctx):
-    logger.info('Command -changeLog from User: ' + str(ctx.message.author.id))
+    logger.info('Command -changeLog from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + str(ctx.message.guild.id) + ")")
     embed = discord.Embed(title='Change Log', description=changelog, color=0x008CFF)
     embed.add_field(name='Developer', value='<@198844841977708545>')
     embed.add_field(name='Version', value=version)
