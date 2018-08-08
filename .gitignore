@@ -29,6 +29,9 @@
 # .idea/*.iml
 # .idea/modules
 
+#Database Files
+*.txt
+
 # CMake
 cmake-build-*/
 
