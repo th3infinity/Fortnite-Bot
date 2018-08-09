@@ -31,3 +31,9 @@ Crawles EGL and UMG (support for cmg to add) for Tournaments.
 To Add:
 * Date Limit
 * Entry Fee Parameter
+
+## Suggestions and Credits/Usage
+Feel free to use this Bot but it would be nice if you message me (maybe show your server) and give credits. ;)
+I'm open to any suggestions or new features. Just open a pull request or add an issue.
+
+If you wanna support me then I would be happy about an donation. Just message me. <3
