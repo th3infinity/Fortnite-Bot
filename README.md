@@ -36,4 +36,7 @@ To Add:
 Feel free to use this Bot but it would be nice if you message me (maybe show your server) and give credits. ;)
 I'm open to any suggestions or new features. Just open a pull request or add an issue.
 
-If you wanna support me then I would be happy about an donation. Just message me. <3
+## Support
+Any support is appreciated. <3 Maybe i can buy me some beer for it ;)
+
+[PayPal Donation](https://paypal.me/th3infinity)
