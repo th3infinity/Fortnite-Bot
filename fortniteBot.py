@@ -8,6 +8,7 @@ from time import localtime, strftime
 from discord.ext import commands
 from lxml import html
 from datetime import datetime,timedelta
+from dateutil import tz
 
 with open("database.txt","r") as databaseFile:
     if os.stat("database.txt").st_size == 0:
@@ -19,21 +20,32 @@ TOKEN = [botDatabase['testToken'],botDatabase['realToken']]
 client = discord.Client()
 bot = commands.Bot(command_prefix='-', description="Fortnite Bot made by th3infinity#6720")
 url = "https://api.fortnitetracker.com/v1/profile/{}/{}"
+cmgurl = "https://www.checkmategaming.com/tournament/pc/fortnite/-80-free-amateur-global-2v2-fortnite-br-1nd-{}-{}"
 headers = {"TRN-Api-Key": botDatabase['trnKey']}
 platforms = ['pc', 'psn', 'xbl']
 roles = ['80%+', '70%', '60%', '50%', '40%', '30%', '25%', '20%', '15%', '10%']
 maint = False
 developerID = 198844841977708545
+localTimezone = tz.tzlocal()
+
+hdr = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Connection': 'keep-alive'}
 
 ###Tournaments Stuff
 class Tournament:
     next_id = 0
 
-    def __init__(self,t_name,t_time,t_costs,t_link,t_slots,t_id):
+    def __init__(self,t_name,t_time,t_reg,t_costs,t_link,t_slots,t_id):
         self.id = Tournament.next_id
         Tournament.next_id += 1
         self.name = t_name
         self.time = t_time
+        self.reg = t_reg
         self.costs = t_costs
         self.link = t_link
         self.slots = t_slots
@@ -42,9 +54,10 @@ class Tournament:
 
 umg_tournaments = []
 egl_tournaments = []
+cmg_tournaments = []
 
 version = '0.4'
-lastupdated = '2018-08-08'
+lastupdated = '2018-08-10'
 changelog = '- added autom Tournament crawling\n - multi Server support'
 
 
@@ -189,7 +202,7 @@ async def setup(ctx, botspamID: commands.TextChannelConverter, logChannelID: com
         botDatabase[guildID]['logChannelID'] = logChannelID.id
         botDatabase[guildID]['tournamentChannelID'] = tournamentChannelID.id
     else:
-        botDatabase[guildID] = {'botspamID': botspamID.id, 'logChannelID': logChannelID.id, 'tournamentChannelID': tournamentChannelID.id, 'allowedChannels': [], 'modRoles': [], 'umg_posted': [], 'egl_posted': [], 'blacklist': [], 'minGames': 200, 'nameDatabase': {}}
+        botDatabase[guildID] = {'botspamID': botspamID.id, 'logChannelID': logChannelID.id, 'tournamentChannelID': tournamentChannelID.id, 'allowedChannels': [], 'modRoles': [], 'lastcmg': 2046, 'umg_posted': [], 'egl_posted': [], 'blacklist': [], 'minGames': 200, 'nameDatabase': {}}
     saveDatabase()
     logger.info("Server " + ctx.message.guild.name + "(" + guildID + ") successfully setup")
     embed = discord.Embed(title='Bot Setup',description='Bot erfolgreich eingerichtet!', color=0x00FF00)
@@ -348,7 +361,14 @@ async def rank(ctx, platform, *all):
         guildID = str(ctx.message.guild.id)
         name = ' '.join(all)
         logger.info('Command -rank from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
-        if platform.lower() not in platforms:
+        if len(all) == 0:
+            embed_noname = discord.Embed(title="Win Rate Rang",
+                                         description='Kein Accoutnname angegeben! `-rank pc accname`',
+                                         color=0xFF0000)
+            embed_noname.set_footer(text='made with <3 by th3infinity#6720')
+            logger.error('No Accname give')
+            await ctx.send(embed=embed_noname)
+        elif platform.lower() not in platforms:
             embed_platform = discord.Embed(title='Win Rate Rank',
                                            description='Ungültige Plattform! <' + ', '.join(platforms) + '>', color=0xFF0000)
             embed_platform.set_footer(text='made with <3 by th3infinity#6720')
@@ -904,19 +924,24 @@ async def getTournaments(ctx):
     await ctx.send("Updating Turnier Infos... Das könnte eine Weile dauern!")
     getEGLTournaments()
     getUMGTournaments()
+    getCMGTournaments(guildID)
+
+    tournamentsupdated = 0
 
     for egl_t in egl_tournaments:
         if egl_t.tid not in egl_posted:
 
             tournamentEmbed = discord.Embed(title=egl_t.name,url=egl_t.link, color=0xFFCA34)
             tournamentEmbed.set_thumbnail(url="https://agl.tv/assets/img/logo-xlarge-378f84197d.png")
-            tournamentEmbed.add_field(name='Zeit', value=egl_t.time)
+            tournamentEmbed.add_field(name='Start Zeit', value=egl_t.time)
+            tournamentEmbed.add_field(name='Registration Zeit', value=egl_t.reg)
             tournamentEmbed.add_field(name='Slots', value=egl_t.slots)
             tournamentEmbed.add_field(name='Eintritt', value=egl_t.costs)
             tournamentEmbed.add_field(name='Hoster', value='EGL')
             tournamentEmbed.set_footer(text='made with <3 by th3infinity#6720')
             await (bot.get_channel(tournamentsChannelID)).send(embed=tournamentEmbed)
             egl_posted.append(egl_t.tid)
+            tournamentsupdated += 1
 
     botDatabase[guildID]["egl_posted"] = egl_posted
 
@@ -925,19 +950,34 @@ async def getTournaments(ctx):
 
             tournamentEmbed = discord.Embed(title=umg_t.name,url=umg_t.link, color=0x202C39)
             tournamentEmbed.set_thumbnail(url="https://seedroid.com/img/post/icons/512/com.umggaming.events.jpg")
-            tournamentEmbed.add_field(name='Zeit', value=umg_t.time)
+            tournamentEmbed.add_field(name='Start Zeit', value=umg_t.time)
+            tournamentEmbed.add_field(name='Registration Zeit', value=umg_t.reg)
             tournamentEmbed.add_field(name='Slots', value=umg_t.slots)
             tournamentEmbed.add_field(name='Eintritt', value=umg_t.costs)
             tournamentEmbed.add_field(name='Hoster', value='UMG')
             tournamentEmbed.set_footer(text='made with <3 by th3infinity#6720')
             await (bot.get_channel(tournamentsChannelID)).send(embed=tournamentEmbed)
             umg_posted.append(umg_t.tid)
+            tournamentsupdated += 1
 
     botDatabase[guildID]["umg_posted"] = umg_posted
 
     saveDatabase()
 
-    await ctx.send("Erfolgreich Turniere aktualisiert!")
+    for cmg_t in cmg_tournaments:
+        tournamentsupdated += 1
+        tournamentEmbed = discord.Embed(title=cmg_t.name,url=cmg_t.link, color=0x96E4F1)
+        tournamentEmbed.set_thumbnail(url="https://i.imgur.com/uzqFCp0.png")
+        tournamentEmbed.add_field(name='Start Zeit', value=cmg_t.time)
+        tournamentEmbed.add_field(name='Registration Zeit', value=cmg_t.reg)
+        tournamentEmbed.add_field(name='Slots', value=cmg_t.slots)
+        tournamentEmbed.add_field(name='Eintritt', value=cmg_t.costs)
+        tournamentEmbed.add_field(name='Hoster', value='CMG')
+        tournamentEmbed.set_footer(text='made with <3 by th3infinity#6720')
+        await (bot.get_channel(tournamentsChannelID)).send(embed=tournamentEmbed)
+
+    logger.info('Number of updated Tournaments: ' + str(tournamentsupdated))
+    await ctx.send("Erfolgreich Turniere aktualisiert! Es wurden " + str(tournamentsupdated) + " neue Turnier gefunden.")
 
 
 def getEGLTournaments():
@@ -958,6 +998,7 @@ def getEGLTournaments():
         platform = platform_i[0].attrib['title']
 
         if platform == 'PC':
+
             name = element.xpath('.//h3[@class="text-truncate"]/text()')
             if len(name) < 1:
                 name = ["Unbekannt"]
@@ -979,23 +1020,24 @@ def getEGLTournaments():
                 t_id = "Unbekannt"
 
 
-
             date = element.xpath('.//span[@class="h2"]/text()')
             if len(date) < 1:
-                date = ["Unbekannt"]
-
-            time = element.xpath('.//span[@class="type-md"]/text()')
-            if len(time) > 0:
-                time = time[0].rpartition('-')[2]
-                time = time.replace('BST', '')
-                time2 = datetime.strptime(time.strip(), '%H:%M')
-                time2 = time2 + timedelta(hours=1)
+                timestr = 'Unbekannt'
             else:
-                time2 = datetime.now()
+                time = element.xpath('.//span[@class="type-md"]/text()')
+
+                if len(time) > 0:
+                    time = date[0] + ' ' + time[0]
+
+                    t_time = datetime.strptime(time.strip(),'%b %d %a - %H:%M BST')
+                    t_time += timedelta(hours=1)
+                    timestr = format(t_time, '%d/%m/%y - %H:%M Uhr')
+                else:
+                    timestr = 'Unbekannt'
 
             if t_id not in saveList:
                 newtournament = Tournament(name[0] + ' - ' + details[0],
-                                           date[0] + ' - ' + format(time2, '%H:%M Uhr'), '0', link, slots[0],
+                                           timestr, 'Unbekannt', 'Free', link, slots[0],
                                            t_id)
                 egl_tournaments.append(newtournament)
                 #print(newtournament.id)
@@ -1022,11 +1064,13 @@ def getUMGTournaments():
         if len(name) < 1:
             name = ["Unbekannt"]
         time_unformatted = element.xpath('.//span[@class="light-gray"]/text()')
+
         if len(time_unformatted) > 1:
             time = datetime.strptime(time_unformatted[1].replace('EDT','').strip(),'%m/%d/%y %I:%M%p')
             time += timedelta(hours=6)
         else:
             time = datetime.now()
+
         costs = element.xpath('.//div[@class="credits-circle"]/text()')
         if len(costs) < 1:
             costs = ["Unbekannt"]
@@ -1039,18 +1083,23 @@ def getUMGTournaments():
                 tree_slots = html.fromstring(resp_slots.content)
                 slots_ul = tree_slots.xpath('//ul[@class="list-unstyled col-sm-4 col-xs-6"]')
                 if len(slots_ul) > 1:
+                    reg_li = slots_ul[0].xpath('.//li[@class="margin-40"]')
+                    reg_value = reg_li[0].xpath('.//span[@class="light-gray"]/text()')
+                    t_reg = datetime.strptime(reg_value[0].strip(),'%m/%d/%y %I:%M%p')
+                    t_reg += timedelta(hours=6)
                     slots_li = slots_ul[1].xpath('.//li[@class="margin-40"]')
                     slots = slots_li[0].xpath('.//span[@class="light-gray"]/text()')
                 else:
                     slots = ["Unbekannt"]
-
+                    t_reg = datetime.now()
         else:
             link = "Unbekannt"
             slots = ["Unbekannt"]
             t_id = "Unbekannt"
+            t_reg = datetime.now()
 
         if t_id not in saveList and int(costs[0]) == 0:
-            newtournament = Tournament(name[0], format(time,'%d/%m/%y - %H:%M Uhr'), costs[0] + ' Credits',link,slots[0],t_id)
+            newtournament = Tournament(name[0], format(time,'%d/%m/%y - %H:%M Uhr'), format(t_reg,'%d/%m/%y - %H:%M Uhr'), costs[0] + ' Credits',link,slots[0],t_id)
             umg_tournaments.append(newtournament)
             #print(newtournament.id)
             #print(newtournament.name)
@@ -1059,6 +1108,74 @@ def getUMGTournaments():
             #print(newtournament.link)
             #print(newtournament.slots)
 
+
+def getCMGTournaments(guildID):
+    lasttournament = botDatabase[guildID]['lastcmg']
+
+    saveList = []
+
+    for tournament in cmg_tournaments:
+        saveList.append(tournament.tid)
+    global nexttournament
+    nexttournament = True
+
+    while nexttournament:
+        lasttournament += 3
+
+        t_link = cmgurl.format(lasttournament,lasttournament + 33589)
+        resp = requests.get(t_link, headers=hdr)
+        file = open("respons.txt", "w",encoding='utf-8')
+        file.write(resp.text)
+        file.close()
+        tree = html.fromstring(resp.content)
+
+        t_values = tree.xpath('//div[@class="tournament-panel-value"]/text()')
+
+        t_id = str(lasttournament) + "-" + str(lasttournament + 33589)
+        t_name = "80 Free Amateur Global 2v2 #" + str(lasttournament)
+        t_costs = t_values[6]
+        t_costs.replace('\t', '')
+
+        if t_costs != 'This tournament has been archived.':
+            time_unformatted = t_values[9]
+
+            commaindex = time_unformatted.find(',')
+            time_unformatted = time_unformatted[:commaindex - 2] + time_unformatted[commaindex:]
+
+            t_time = datetime.strptime(time_unformatted.replace('EDT', '').strip(), '%a %b %d, %Y %I:%M %p')
+            t_time += timedelta(hours=6)
+            t_registration = t_values[7]
+            commaindex = t_registration.find(',')
+            t_registration = t_registration[:commaindex - 2] + t_registration[commaindex:]
+
+            t_reg = datetime.strptime(t_registration.replace('EDT', '').strip(), '%a %b %d, %Y %I:%M %p')
+            t_reg += timedelta(hours=6)
+            t_slots = t_values[12]
+
+        elif 'Free' not in t_values[7]:
+            nexttournament = False
+            break
+        else:
+            time_unformatted = t_values[10]
+            commaindex = time_unformatted.find(',')
+            time_unformatted = time_unformatted[:commaindex - 2] + time_unformatted[commaindex:]
+
+            t_time = datetime.strptime(time_unformatted.replace('EDT', '').strip(), '%a %b %d, %Y %I:%M %p')
+            t_time += timedelta(hours=6)
+
+        if t_id not in saveList and t_time > datetime.now():
+            newtournament = Tournament(t_name,format(t_time,'%d/%m/%y - %H:%M Uhr'),format(t_reg,'%d/%m/%y - %H:%M Uhr'),t_costs,t_link,t_slots,t_id)
+            cmg_tournaments.append(newtournament)
+            #print(newtournament.id)
+            #print(newtournament.name)
+            #print(newtournament.time)
+            #print(newtournament.reg)
+            #print(newtournament.costs)
+            #print(newtournament.link)
+            #print(newtournament.slots)
+
+    botDatabase[guildID]['lastcmg'] = lasttournament - 3
+    saveDatabase()
 
 @bot.command(hidden=True, pass_context=True, name='exitBot', aliases=['exitbot'])
 @commands.check(is_developer)
@@ -1150,7 +1267,7 @@ async def on_ready():
     embed.add_field(name='Last Updated', value=lastupdated)
     embed.set_footer(text='made with <3 by th3infinity#6720')
     for guildID in botDatabase:
-        if guildID not in ['testToken', 'realToken', 'trnKey']:
+        if guildID not in ['testToken', 'realToken', 'trnKey', 'lastcmg']:
             await (bot.get_channel(botDatabase[guildID]['botspamID'])).send(embed=embed)
 
 
