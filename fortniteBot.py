@@ -65,15 +65,17 @@ def has_any_role(member, roles):
     memberroles = []
     for mr in member.roles:
         memberroles.append(mr.id)
-    print(memberroles)
-    print(roles)
     return len(set(memberroles).intersection(roles)) > 0
 
 def is_allowedchannel(ctx):
+    guildID = str(ctx.message.guild.id)
     allowed = True
-    channels = botDatabase[str(ctx.message.guild.id)]['allowedChannels']
-    if len(channels) > 0:
-        allowed = ctx.message.channel.id in channels
+    if guildID in botDatabase:
+        channels = botDatabase[guildID]['allowedChannels']
+        if len(channels) > 0:
+            allowed = ctx.message.channel.id in channels
+    else:
+        allowed = False
     return allowed
 
 
@@ -82,7 +84,11 @@ def is_developer(ctx):
 
 
 def is_allowed(ctx):
-    return is_developer(ctx) or has_any_role(ctx.message.author, botDatabase[str(ctx.message.guild.id)]['modRoles'])
+    guildID = str(ctx.message.guild.id)
+    modRoles = []
+    if guildID in botDatabase:
+        modRoles = botDatabase[guildID]['modRoles']
+    return is_developer(ctx) or has_any_role(ctx.message.author, modRoles)
 
 
 async def is_setup(ctx):
@@ -1229,7 +1235,7 @@ def getCMGTournaments(guildID):
 async def exitBot(ctx):
     logger.info('Command -exitBot from User: ' + str(ctx.message.author.id))
     logger.info("Bot Disconnecting...")
-    embed = discord.Embed(title='Snipe', description='Bot disconnecting...', color=0xFF0000)
+    embed = discord.Embed(title='Disconnect', description='Bot disconnecting...', color=0xFF0000)
     embed.set_footer(text='made with ♥ by th3infinity#6720')
     await ctx.send(embed=embed)
     await bot.logout()
