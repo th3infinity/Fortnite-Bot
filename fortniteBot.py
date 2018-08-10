@@ -4,6 +4,7 @@ import logging
 import json
 import requests
 import os
+import asyncio
 from time import localtime, strftime
 from discord.ext import commands
 from lxml import html
@@ -58,8 +59,15 @@ cmg_tournaments = []
 
 version = '0.4'
 lastupdated = '2018-08-10'
-changelog = '- added autom Tournament crawling\n - multi Server support'
+changelog = '- added autom Tournament crawling\n - multi Server support\n - layout changes\n - added help text\n - fixed some error messages'
 
+def has_any_role(member, roles):
+    memberroles = []
+    for mr in member.roles:
+        memberroles.append(mr.id)
+    print(memberroles)
+    print(roles)
+    return len(set(memberroles).intersection(roles)) > 0
 
 def is_allowedchannel(ctx):
     allowed = True
@@ -74,17 +82,13 @@ def is_developer(ctx):
 
 
 def is_allowed(ctx):
-    if str(ctx.message.guild.id) in botDatabase:
-        modroleslist = botDatabase[str(ctx.message.guild.id)]['modRoles']
-    else:
-        modroleslist = []
-    return is_developer(ctx) or commands.has_any_role(modroleslist)
+    return is_developer(ctx) or has_any_role(ctx.message.author, botDatabase[str(ctx.message.guild.id)]['modRoles'])
 
 
 async def is_setup(ctx):
     issetup = str(ctx.message.guild.id) in botDatabase
     if not issetup:
-        await ctx.send("Please Setup the Bot for this Server: `-setup <botspam Channel ID> <log Channel ID> <turnier Channel ID>`")
+        await ctx.send("Please Setup the Bot for this Server: `-setup <botspam Channel> <log Channel> <turnier Channel>`")
     return issetup
 
 
@@ -109,14 +113,19 @@ async def commandList(ctx):
 
     ###ModOnly
 
-    if is_developer(ctx) or (guildID in botDatabase and ctx.message.author.id in botDatabase[guildID]['modRoles']) :
+    if is_allowed(ctx):
         embed_bot.add_field(name='`-blacklist`', value='Postet die aktuelle Acc Blacklist für Ranks')
         embed_bot.add_field(name='`-addBlacklist <name>`', value='Fügt Namen zur Blacklist hinzu')
         embed_bot.add_field(name='`-removeBlacklist <name>`', value='Entfernt Namen von Blacklist')
-        embed_bot.add_field(name='`-matchMin <number>`', value='Ändert das Match Minimum')
+        embed_bot.add_field(name='`-matchMin <number>[Optional]`', value='Ändert das Match Minimum oder zeigt das aktuelle an')
         embed_bot.add_field(name='`-database`', value='Schickt die aktuelle Nutzungsdatenbank per PN')
-        embed_bot.add_field(name='`-autoRank <roleName>`', value='Gibt allen Mitgliedern der Role den WinRate Rang')
-    embed_bot.set_footer(text='made with <3 by th3infinity#6720')
+        embed_bot.add_field(name='`-autoRank <Rolle>`', value='Gibt allen Mitgliedern der Role den WinRate Rang')
+        embed_bot.add_field(name='`-setup <botspam Channel> <log Channel> <turnier Channel>`', value='Richtet neuen Server ein oder ändert Channel von vorhandenem Server.')
+        embed_bot.add_field(name='`-allowedChannels <Channel>[optional]`',
+                            value='Add/Remove erlaubte Channel oder zeigt erlaubte Channel an')
+        embed_bot.add_field(name='`-modList <Rolle>[optional]`',
+                            value='Add/Remove Mod Rolle oder zeigt Mod Rollen an')
+    embed_bot.set_footer(text='made with ♥ by th3infinity#6720')
     await ctx.send(embed=embed_bot)
 
 
@@ -131,7 +140,7 @@ async def maintenance(ctx):
         answer = 'Bot Maintenance wurde deaktiviert!'
     logger.info(answer)
     embed_maint = discord.Embed(title='Maintenance', description=answer, color=0xE88100)
-    embed_maint.set_footer(text='made with <3 by th3infinity#6720')
+    embed_maint.set_footer(text='made with ♥ by th3infinity#6720')
     await ctx.send(embed=embed_maint)
 
 
@@ -164,7 +173,7 @@ async def blacklist(ctx):
         blstr += blname + '\n'
     embed_success = discord.Embed(title='Blacklist',
                                   description=blstr, color=0x008CFF)
-    embed_success.set_footer(text='made with <3 by th3infinity#6720')
+    embed_success.set_footer(text='made with ♥ by th3infinity#6720')
     await ctx.send(embed=embed_success)
 
 
@@ -182,12 +191,12 @@ async def matchMin(ctx, number=-1):
         embed_info = discord.Embed(title='Match Minimum',
                                    description='Match Minimum zu **' + str(botDatabase[guildID]['minGames']) + '** geändert',
                                    color=0x00FF00)
-        embed_info.set_footer(text='made with <3 by th3infinity#6720')
+        embed_info.set_footer(text='made with ♥ by th3infinity#6720')
         await ctx.send(embed=embed_info)
     else:
         embed_info = discord.Embed(title='Match Minimum',
                                    description='Aktuelles Match Minimum: **' + str(botDatabase[guildID]['minGames']) + '**', color=0x008CFF)
-        embed_info.set_footer(text='made with <3 by th3infinity#6720')
+        embed_info.set_footer(text='made with ♥ by th3infinity#6720')
         await ctx.send(embed=embed_info)
 
 
@@ -206,16 +215,24 @@ async def setup(ctx, botspamID: commands.TextChannelConverter, logChannelID: com
     saveDatabase()
     logger.info("Server " + ctx.message.guild.name + "(" + guildID + ") successfully setup")
     embed = discord.Embed(title='Bot Setup',description='Bot erfolgreich eingerichtet!', color=0x00FF00)
-    embed.set_footer(text='made with <3 by th3infinity#6720')
+    embed.set_footer(text='made with ♥ by th3infinity#6720')
     await ctx.send(embed=embed)
 
 
 @setup.error
 async def setup_on_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        embed = discord.Embed(title='Setup', description='Fehlende Argumente! `-setup <botspam Channel ID> <log '
-                                                         'Channel ID> <turnier Channel ID>`', color=0xFF0000)
-        embed.set_footer(text='made with <3 by th3infinity#6720')
+        logger.error('Missing Arguments for command setup (' + str(ctx.message.content) + ') from User: ' + ctx.message.author.name)
+        embed = discord.Embed(title='Setup', description='Fehlende Argumente! `-setup <botspam Channel> <log '
+                                                         'Channel> <turnier Channel>`', color=0xFF0000)
+        embed.set_footer(text='made with ♥ by th3infinity#6720')
+        await ctx.send(embed=embed)
+    if isinstance(error, commands.BadArgument):
+        logger.error('Invalid Channel for command setup (' + str(
+            ctx.message.content) + ') from User: ' + ctx.message.author.name)
+        embed = discord.Embed(title='Setup', description='Ungültiger Channel! `-setup <botspam Channel> <log '
+                                                         'Channel> <turnier Channel>`', color=0xFF0000)
+        embed.set_footer(text='made with ♥ by th3infinity#6720')
         await ctx.send(embed=embed)
 
 
@@ -228,7 +245,7 @@ async def allowedChannels(ctx,channel: commands.TextChannelConverter = ''):
 
     embed = discord.Embed(title='Erlaubte Channel')
     embed.colour = 0x008CFF
-    embed.set_footer(text='made with <3 by th3infinity#6720')
+    embed.set_footer(text='made with ♥ by th3infinity#6720')
     if channel == '':
         channelStr = ''
         for ch in botDatabase[guildID]['allowedChannels']:
@@ -255,16 +272,26 @@ async def allowedChannels(ctx,channel: commands.TextChannelConverter = ''):
     await ctx.send(embed=embed)
 
 
-@bot.command(hidden=True, pass_context=True, name='modRoles', aliases=['modroles', 'modr', 'mr'])
+@allowedChannels.error
+async def allowedChannels_on_error(ctx, error):
+    if isinstance(error, commands.BadArgument):
+        logger.error('Invalid Channel for command allowedChannels (' + str(
+            ctx.message.content) + ') from User: ' + ctx.message.author.name)
+        embed = discord.Embed(title='Erlaubte Channel', description='Ungültiger Channel! `-allowedChannels <Channel>`', color=0xFF0000)
+        embed.set_footer(text='made with ♥ by th3infinity#6720')
+        await ctx.send(embed=embed)
+
+
+@bot.command(hidden=True, pass_context=True, name='modList', aliases=['modlist', 'modls', 'modl', 'ml'])
 @commands.check(is_setup)
 @commands.check(is_allowed)
-async def modRoles(ctx,role: commands.RoleConverter = ''):
+async def modList(ctx,role: commands.RoleConverter = ''):
     guildID = str(ctx.message.guild.id)
-    logger.info('Command -modRoles from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
+    logger.info('Command -modList from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
 
     embed = discord.Embed(title='Moderatoren')
     embed.colour = 0x008CFF
-    embed.set_footer(text='made with <3 by th3infinity#6720')
+    embed.set_footer(text='made with ♥ by th3infinity#6720')
     if role == '':
         roleStr = ''
         for r in botDatabase[guildID]['modRoles']:
@@ -289,6 +316,16 @@ async def modRoles(ctx,role: commands.RoleConverter = ''):
     await ctx.send(embed=embed)
 
 
+@modList.error
+async def modList_on_error(ctx, error):
+    if isinstance(error, commands.BadArgument):
+        logger.error('Invalid Role for command modList (' + str(
+            ctx.message.content) + ') from User: ' + ctx.message.author.name)
+        embed = discord.Embed(title='Moderatoren', description='Ungültige Rolle! `-modList <Rolle>`', color=0xFF0000)
+        embed.set_footer(text='made with ♥ by th3infinity#6720')
+        await ctx.send(embed=embed)
+
+
 @bot.command(hidden=True, pass_context=True, name='addBlacklist', aliases=['addblacklist', 'addbl', 'bl+'])
 @commands.check(is_setup)
 @commands.check(is_allowed)
@@ -300,7 +337,7 @@ async def addBlacklist(ctx, *name):
     if blname.lower() in (n.lower() for n in botDatabase[guildID]['blacklist']):
         embed_already = discord.Embed(title='Blacklist',
                                       description='Name **' + blname + '** schon auf der Blacklist!', color=0xFF0000)
-        embed_already.set_footer(text='made with <3 by th3infinity#6720')
+        embed_already.set_footer(text='made with ♥ by th3infinity#6720')
         logger.info('name: ' + blname + ' already on blacklist')
         await ctx.send(embed=embed_already)
     else:
@@ -308,7 +345,7 @@ async def addBlacklist(ctx, *name):
         saveDatabase()
         embed_success = discord.Embed(title='Blacklist',
                                       description='Name **' + blname + '** zur Blacklist hinzugefügt!', color=0x00FF00)
-        embed_success.set_footer(text='made with <3 by th3infinity#6720')
+        embed_success.set_footer(text='made with ♥ by th3infinity#6720')
         logger.info('name: ' + blname + ' added to blacklist')
         await ctx.send(embed=embed_success)
 
@@ -316,8 +353,10 @@ async def addBlacklist(ctx, *name):
 @addBlacklist.error
 async def addBlacklist_on_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
+        logger.error('Missing Arguments for command addBlacklist (' + str(
+            ctx.message.content) + ') from User: ' + ctx.message.author.name)
         embed = discord.Embed(title='Blacklist', description='Fehlendes Argument! `-addBlacklist <name>', color=0xFF0000)
-        embed.set_footer(text='made with <3 by th3infinity#6720')
+        embed.set_footer(text='made with ♥ by th3infinity#6720')
         await ctx.send(embed=embed)
 
 
@@ -334,13 +373,13 @@ async def removeBlacklist(ctx, *name):
         saveDatabase()
         embed_success = discord.Embed(title='Blacklist',
                                       description='Name **' + blname + '** von Blacklist gelöscht!', color=0x00FF00)
-        embed_success.set_footer(text='made with <3 by th3infinity#6720')
+        embed_success.set_footer(text='made with ♥ by th3infinity#6720')
         logger.info('name: ' + blname + ' deleted from blacklist')
         await ctx.send(embed=embed_success)
     else:
         embed_error = discord.Embed(title='Blacklist',
                                     description='Name **' + blname + '** nicht in der Blacklist!', color=0xFF0000)
-        embed_error.set_footer(text='made with <3 by th3infinity#6720')
+        embed_error.set_footer(text='made with ♥ by th3infinity#6720')
         logger.info('name: ' + blname + ' not in blacklist')
         await ctx.send(embed=embed_error)
 
@@ -348,8 +387,10 @@ async def removeBlacklist(ctx, *name):
 @removeBlacklist.error
 async def removeBlacklist_on_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
+        logger.error('Missing Arguments for command removeBlacklist (' + str(
+            ctx.message.content) + ') from User: ' + ctx.message.author.name)
         embed = discord.Embed(title='Blacklist', description='Fehlendes Argument! `-removeBlacklist <name>', color=0xFF0000)
-        embed.set_footer(text='made with <3 by th3infinity#6720')
+        embed.set_footer(text='made with ♥ by th3infinity#6720')
         await ctx.send(embed=embed)
 
 
@@ -365,13 +406,13 @@ async def rank(ctx, platform, *all):
             embed_noname = discord.Embed(title="Win Rate Rang",
                                          description='Kein Accoutnname angegeben! `-rank pc accname`',
                                          color=0xFF0000)
-            embed_noname.set_footer(text='made with <3 by th3infinity#6720')
+            embed_noname.set_footer(text='made with ♥ by th3infinity#6720')
             logger.error('No Accname give')
             await ctx.send(embed=embed_noname)
         elif platform.lower() not in platforms:
             embed_platform = discord.Embed(title='Win Rate Rank',
                                            description='Ungültige Plattform! <' + ', '.join(platforms) + '>', color=0xFF0000)
-            embed_platform.set_footer(text='made with <3 by th3infinity#6720')
+            embed_platform.set_footer(text='made with ♥ by th3infinity#6720')
 
             logger.error('No valid Mode: ' + platform)
             await ctx.send(embed=embed_platform)
@@ -379,7 +420,7 @@ async def rank(ctx, platform, *all):
             embed_blacklist = discord.Embed(title='Win Rate Rank', description='<@' + str(
                 ctx.message.author.id) + '> AccName **' + name.lower() + '** ist blockiert! Falls du der Eigentümer des Accounts bist wende dich an jemanden vom Team!',
                                             color=0xFF0000)
-            embed_blacklist.set_footer(text='made with <3 by th3infinity#6720')
+            embed_blacklist.set_footer(text='made with ♥ by th3infinity#6720')
             logger.error('Name on blacklist: ' + name.lower())
             await ctx.send(embed=embed_blacklist)
         else:
@@ -404,8 +445,10 @@ async def rank(ctx, platform, *all):
                         for ids in namedatabase[accname]['ids']:
                             idused += '<@' + str(ids) + '> '
                         idused += ']'
-                        await (bot.get_channel(checkChannelID)).send('Accname: **' + accname + '** was used **' + str(
-                            namedatabase[accname]['usages']) + '** Times! Users: ' + idused)
+                        multiUsageString = 'Accname: **' + accname + '** was used **' + str(
+                            namedatabase[accname]['usages']) + '** Times! Users: ' + idused
+                        await (bot.get_channel(checkChannelID)).send(multiUsageString)
+                        await ctx.message.guild.get_member(developerID).send(multiUsageString)
                 else:
                     namedatabase[accname] = {'usages': 1, 'winRatio': round(overall_winRatio, 2),
                                              'winRatio_old': round(overall_winRatio_old, 2),
@@ -464,7 +507,7 @@ async def rank(ctx, platform, *all):
                                                    description='<@' + str(
                                                        ctx.message.author.id) + '> dir wurde der Rang **' + role.name + '** gegeben! Deine aktuelle Winrate beträgt: **' + str(
                                                        round(overall_winRatio, 2)) + '%**', color=0x00FF00)
-                        embed_role.set_footer(text='EpicGameName: ' + accname + ' | made with <3 by th3infinity#6720')
+                        embed_role.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
                         logger.info('Rank ' + role.name + ' was given with winrate: ' + str(overall_winRatio))
                         await ctx.send(embed=embed_role)
                     else:
@@ -473,7 +516,7 @@ async def rank(ctx, platform, *all):
                                                          ctx.message.author.id) + '> dir fehlen **' + str(
                                                          round(10 - overall_winRatio, 2)) + '%** zum 10% Rang!',
                                                      color=0xFF0000)
-                        embed_norole.set_footer(text='EpicGameName: ' + accname + ' | made with <3 by th3infinity#6720')
+                        embed_norole.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
                         logger.info('User missing ' + str(10 - overall_winRatio) + '%')
                         await ctx.send(embed=embed_norole)
                 elif overall_matches_old >= match_min:
@@ -527,7 +570,7 @@ async def rank(ctx, platform, *all):
                                                        round(overall_winRatio_old,
                                                              2)) + '%** Für Season 5 Rang fehlen dir: **' + str(
                                                        match_min - overall_matches) + ' Matches**', color=0x00FF00)
-                        embed_role.set_footer(text='EpicGameName: ' + accname + ' | made with <3 by th3infinity#6720')
+                        embed_role.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
                         logger.info('Rank ' + role.name + ' was given with winrate: ' + str(overall_winRatio_old))
                         await ctx.send(embed=embed_role)
                     else:
@@ -538,7 +581,7 @@ async def rank(ctx, platform, *all):
                                                                2)) + '%** zum 10% Rang, basierend auf der letzten Season! Für Season 5 Rang fehlen dir: **' + str(
                                                        match_min - overall_matches) + ' Matches**',
                                                      color=0xFF0000)
-                        embed_norole.set_footer(text='EpicGameName: ' + accname + ' | made with <3 by th3infinity#6720')
+                        embed_norole.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
                         logger.info('User missing ' + str(10 - overall_winRatio_old) + '%')
                         await ctx.send(embed=embed_norole)
                 else:
@@ -549,7 +592,7 @@ async def rank(ctx, platform, *all):
                                                   color=0xFF0000)
                     embed_matches.add_field(name='Alte Stats',
                                             value='Melde dich für die **Rangvergabe** basierend auf der **alten Season** beim **Community Support** oder geh in den **Rang anfordern Channel**! Automatische Rangvergabe nicht möglich, da die FNTracker API keine Stats der alten Season mehr sendet. **FeelsBadMan.**')
-                    embed_matches.set_footer(text='EpicGameName: ' + accname + ' | made with <3 by th3infinity#6720')
+                    embed_matches.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
                     #embed_matches = discord.Embed(title='Win Rate Rank',
                     #                              description='<@' + str(
                     #                                  ctx.message.author.id) + '> Zu wenig Spiele in der aktuellen/letzten Season! Dir fehlen noch **' + str(
@@ -562,206 +605,208 @@ async def rank(ctx, platform, *all):
         embed_maint = discord.Embed(title='Maintenance',
                                     description='Bot befindet sich im Maintenance Modus! Rangvergabe deaktiviert. Bitte warten.',
                                     color=0xE88100)
-        embed_maint.set_footer(text='made with <3 by th3infinity#6720')
+        embed_maint.set_footer(text='made with ♥ by th3infinity#6720')
         await ctx.send(embed=embed_maint)
 
 
 @bot.command(hidden=True, pass_context=True, name='autoRank', aliases=['autorank', 'autorang', 'ar', 'autoRang'])
 @commands.check(is_setup)
 @commands.check(is_allowed)
-async def autoRank(ctx, roleName):
+async def autoRank(ctx, role: commands.RoleConverter):
     if not maint or is_developer(ctx):
         guildID = str(ctx.message.guild.id)
         logger.info('Command -autoRank from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
-        role = discord.utils.get(ctx.message.guild.roles, name=roleName)
-        if role is None:
-            embed_notfound = discord.Embed(title='Auto Rank', description='Rank: **' + roleName + '** nicht gefunden!', color=0xFF0000)
-            embed_notfound.set_footer(text='made with <3 by th3infinity#6720')
-            logger.error('Role ' + roleName + ' not found')
-            await ctx.send(embed=embed_notfound)
-        else:
-            count_found = 0
-            count_notfound = 0
-            for member in role.members:
-                results = await getStats(ctx,member.display_name.split("|")[0],'pc',False)
-                if results['accname']:
-                    count_found += 1
-                    accname = results['accname']
-                    overall_winRatio = results['overall_winRatio']
-                    overall_winRatio_old = results['overall_winRatio_old']
-                    overall_matches = results['overall_matches']
-                    overall_matches_old = results['overall_matches_old']
+        count_found = 0
+        count_notfound = 0
+        for member in role.members:
+            results = await getStats(ctx,member.display_name.split("|")[0],'pc',False)
+            if results['accname']:
+                count_found += 1
+                accname = results['accname']
+                overall_winRatio = results['overall_winRatio']
+                overall_winRatio_old = results['overall_winRatio_old']
+                overall_matches = results['overall_matches']
+                overall_matches_old = results['overall_matches_old']
 
-                    namedatabase = botDatabase[guildID]['nameDatabase']
-                    checkChannelID = botDatabase[guildID]['logChannelID']
-                    match_min = botDatabase[guildID]['minGames']
+                namedatabase = botDatabase[guildID]['nameDatabase']
+                checkChannelID = botDatabase[guildID]['logChannelID']
+                match_min = botDatabase[guildID]['minGames']
 
-                    if (overall_matches >= match_min):
-                        overten = True
-                        if (round(overall_winRatio) >= 80):
-                            role = discord.utils.get(ctx.message.guild.roles, name='80%+')
-                        elif (round(overall_winRatio) >= 70):
-                            role = discord.utils.get(ctx.message.guild.roles, name='70%')
-                        elif (round(overall_winRatio) >= 60):
-                            role = discord.utils.get(ctx.message.guild.roles, name='60%')
-                        elif (round(overall_winRatio) >= 50):
-                            role = discord.utils.get(ctx.message.guild.roles, name='50%')
-                        elif (round(overall_winRatio) >= 40):
-                            role = discord.utils.get(ctx.message.guild.roles, name='40%')
-                        elif (round(overall_winRatio) >= 30):
-                            role = discord.utils.get(ctx.message.guild.roles, name='30%')
-                        elif (round(overall_winRatio) >= 25):
-                            role = discord.utils.get(ctx.message.guild.roles, name='25%')
-                        elif (round(overall_winRatio) >= 20):
-                            role = discord.utils.get(ctx.message.guild.roles, name='20%')
-                        elif (round(overall_winRatio) >= 15):
-                            role = discord.utils.get(ctx.message.guild.roles, name='15%')
-                        elif (round(overall_winRatio) >= 10):
-                            role = discord.utils.get(ctx.message.guild.roles, name='10%')
-                        else:
-                            overten = False
+                if (overall_matches >= match_min):
+                    overten = True
+                    if (round(overall_winRatio) >= 80):
+                        role = discord.utils.get(ctx.message.guild.roles, name='80%+')
+                    elif (round(overall_winRatio) >= 70):
+                        role = discord.utils.get(ctx.message.guild.roles, name='70%')
+                    elif (round(overall_winRatio) >= 60):
+                        role = discord.utils.get(ctx.message.guild.roles, name='60%')
+                    elif (round(overall_winRatio) >= 50):
+                        role = discord.utils.get(ctx.message.guild.roles, name='50%')
+                    elif (round(overall_winRatio) >= 40):
+                        role = discord.utils.get(ctx.message.guild.roles, name='40%')
+                    elif (round(overall_winRatio) >= 30):
+                        role = discord.utils.get(ctx.message.guild.roles, name='30%')
+                    elif (round(overall_winRatio) >= 25):
+                        role = discord.utils.get(ctx.message.guild.roles, name='25%')
+                    elif (round(overall_winRatio) >= 20):
+                        role = discord.utils.get(ctx.message.guild.roles, name='20%')
+                    elif (round(overall_winRatio) >= 15):
+                        role = discord.utils.get(ctx.message.guild.roles, name='15%')
+                    elif (round(overall_winRatio) >= 10):
+                        role = discord.utils.get(ctx.message.guild.roles, name='10%')
+                    else:
+                        overten = False
 
-                        if round(overall_winRatio) >= 30:
-                            await (bot.get_channel(checkChannelID)).send(
-                                'User: <@' + str(member.id) + '> got **' + str(round(overall_winRatio,
-                                                                                                 2)) + '%** with Accountname: **' + accname + '** [Current Season]')
+                    if round(overall_winRatio) >= 30:
+                        await (bot.get_channel(checkChannelID)).send(
+                            'User: <@' + str(member.id) + '> got **' + str(round(overall_winRatio,
+                                                                                             2)) + '%** with Accountname: **' + accname + '** [Current Season]')
 
-                        if (round(overall_winRatio)) >= 50:
-                            await ctx.message.guild.get_member(developerID).send(
-                                'User: ' + member.display_name
-                                + '(' + member.name + ') ' + 'ID[' + str(
-                                    member.id) + '] got **'
-                                + str(
-                                    round(overall_winRatio, 2)) + '%** with Accountname: **' + accname + '** [Current '
+                    if (round(overall_winRatio)) >= 50:
+                        await ctx.message.guild.get_member(developerID).send(
+                            'User: ' + member.display_name
+                            + '(' + member.name + ') ' + 'ID[' + str(
+                                member.id) + '] got **'
+                            + str(
+                                round(overall_winRatio, 2)) + '%** with Accountname: **' + accname + '** [Current '
+                                                                                                    'Season]')
+
+                    if overten:
+                        for r in member.roles:
+                            if r.name in roles:
+                                await member.remove_roles(r)
+                            if r.name == 'Alte Season':
+                                await member.remove_roles(r)
+                        await member.add_roles(role)
+                        embed_role = discord.Embed(title='Win Rate Rank - Aktuelle Season',
+                                                   description='<@' + str(
+                                                       member.id) + '> wurde der Rang **' + role.name + '** gegeben! Seine aktuelle Winrate beträgt: **' + str(
+                                                       round(overall_winRatio, 2)) + '%**', color=0x00FF00)
+                        embed_role.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
+                        logger.info('Rank ' + role.name + ' was given with winrate: ' + str(overall_winRatio) + ' to User: ' + str(member.id))
+                        await ctx.send(embed=embed_role)
+                    else:
+                        embed_norole = discord.Embed(title='Win Rate Rank  - Aktuelle Season',
+                                                     description='<@' + str(
+                                                         member.id) + '> fehlen **' + str(
+                                                         round(10 - overall_winRatio, 2)) + '%** zum 10% Rang!',
+                                                     color=0xFF0000)
+                        embed_norole.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
+                        logger.info('User: ' + str(member.id) + ' missing ' + str(10 - overall_winRatio) + '%')
+                        await ctx.send(embed=embed_norole)
+                elif (overall_matches_old >= match_min):
+                    overten = True
+                    if (round(overall_winRatio_old) >= 80):
+                        role = discord.utils.get(ctx.message.guild.roles, name='80%+')
+                    elif (round(overall_winRatio_old) >= 70):
+                        role = discord.utils.get(ctx.message.guild.roles, name='70%')
+                    elif (round(overall_winRatio_old) >= 60):
+                        role = discord.utils.get(ctx.message.guild.roles, name='60%')
+                    elif (round(overall_winRatio_old) >= 50):
+                        role = discord.utils.get(ctx.message.guild.roles, name='50%')
+                    elif (round(overall_winRatio_old) >= 40):
+                        role = discord.utils.get(ctx.message.guild.roles, name='40%')
+                    elif (round(overall_winRatio_old) >= 30):
+                        role = discord.utils.get(ctx.message.guild.roles, name='30%')
+                    elif (round(overall_winRatio_old) >= 25):
+                        role = discord.utils.get(ctx.message.guild.roles, name='25%')
+                    elif (round(overall_winRatio_old) >= 20):
+                        role = discord.utils.get(ctx.message.guild.roles, name='20%')
+                    elif (round(overall_winRatio_old) >= 15):
+                        role = discord.utils.get(ctx.message.guild.roles, name='15%')
+                    elif (round(overall_winRatio_old) >= 10):
+                        role = discord.utils.get(ctx.message.guild.roles, name='10%')
+                    else:
+                        overten = False
+
+                    if round(overall_winRatio_old) >= 30:
+                        await (bot.get_channel(checkChannelID)).send(
+                            'User: <@' + str(member.id) + '> got **' + str(round(overall_winRatio_old,
+                                                                                             2)) + '%** with Accountname: **' + accname + '** [Last Season]')
+
+                    if (round(overall_winRatio_old)) >= 50:
+                        await ctx.message.guild.get_member(developerID).send(
+                            'User: ' + member.display_name
+                            + '(' + member.name + ') ' + 'ID[' + str(
+                                member.id) + '] got **'
+                            + str(
+                                round(overall_winRatio_old, 2)) + '%** with Accountname: **' + accname + '** [Last '
                                                                                                         'Season]')
 
-                        if overten:
-                            for r in member.roles:
-                                if r.name in roles:
-                                    await member.remove_roles(r)
-                                if r.name == 'Alte Season':
-                                    await member.remove_roles(r)
-                            await member.add_roles(role)
-                            embed_role = discord.Embed(title='Win Rate Rank - Aktuelle Season',
-                                                       description='<@' + str(
-                                                           member.id) + '> wurde der Rang **' + role.name + '** gegeben! Seine aktuelle Winrate beträgt: **' + str(
-                                                           round(overall_winRatio, 2)) + '%**', color=0x00FF00)
-                            embed_role.set_footer(text='EpicGameName: ' + accname + ' | made with <3 by th3infinity#6720')
-                            logger.info('Rank ' + role.name + ' was given with winrate: ' + str(overall_winRatio) + ' to User: ' + str(member.id))
-                            await ctx.send(embed=embed_role)
-                        else:
-                            embed_norole = discord.Embed(title='Win Rate Rank  - Aktuelle Season',
-                                                         description='<@' + str(
-                                                             member.id) + '> fehlen **' + str(
-                                                             round(10 - overall_winRatio, 2)) + '%** zum 10% Rang!',
-                                                         color=0xFF0000)
-                            embed_norole.set_footer(text='EpicGameName: ' + accname + ' | made with <3 by th3infinity#6720')
-                            logger.info('User: ' + str(member.id) + ' missing ' + str(10 - overall_winRatio) + '%')
-                            await ctx.send(embed=embed_norole)
-                    elif (overall_matches_old >= match_min):
-                        overten = True
-                        if (round(overall_winRatio_old) >= 80):
-                            role = discord.utils.get(ctx.message.guild.roles, name='80%+')
-                        elif (round(overall_winRatio_old) >= 70):
-                            role = discord.utils.get(ctx.message.guild.roles, name='70%')
-                        elif (round(overall_winRatio_old) >= 60):
-                            role = discord.utils.get(ctx.message.guild.roles, name='60%')
-                        elif (round(overall_winRatio_old) >= 50):
-                            role = discord.utils.get(ctx.message.guild.roles, name='50%')
-                        elif (round(overall_winRatio_old) >= 40):
-                            role = discord.utils.get(ctx.message.guild.roles, name='40%')
-                        elif (round(overall_winRatio_old) >= 30):
-                            role = discord.utils.get(ctx.message.guild.roles, name='30%')
-                        elif (round(overall_winRatio_old) >= 25):
-                            role = discord.utils.get(ctx.message.guild.roles, name='25%')
-                        elif (round(overall_winRatio_old) >= 20):
-                            role = discord.utils.get(ctx.message.guild.roles, name='20%')
-                        elif (round(overall_winRatio_old) >= 15):
-                            role = discord.utils.get(ctx.message.guild.roles, name='15%')
-                        elif (round(overall_winRatio_old) >= 10):
-                            role = discord.utils.get(ctx.message.guild.roles, name='10%')
-                        else:
-                            overten = False
-
-                        if round(overall_winRatio_old) >= 30:
-                            await (bot.get_channel(checkChannelID)).send(
-                                'User: <@' + str(member.id) + '> got **' + str(round(overall_winRatio_old,
-                                                                                                 2)) + '%** with Accountname: **' + accname + '** [Last Season]')
-
-                        if (round(overall_winRatio_old)) >= 50:
-                            await ctx.message.guild.get_member(developerID).send(
-                                'User: ' + member.display_name
-                                + '(' + member.name + ') ' + 'ID[' + str(
-                                    member.id) + '] got **'
-                                + str(
-                                    round(overall_winRatio_old, 2)) + '%** with Accountname: **' + accname + '** [Last '
-                                                                                                            'Season]')
-
-                        if overten:
-                            for r in member.roles:
-                                if r.name in roles:
-                                    await member.remove_roles(r)
-                            await member.add_roles(role)
-                            await member.add_roles(
-                                discord.utils.get(ctx.message.guild.roles, name='Alte Season'))
-                            embed_role = discord.Embed(title='Win Rate Rank  - Alte Season',
-                                                       description='<@' + str(
-                                                           member.id) + '> wurde basierend auf der letzten Season der Rang **' + role.name + '** gegeben! Winrate letzte Season: **' + str(
-                                                           round(overall_winRatio_old,
-                                                                 2)) + '%** Für Season 5 Rang fehlen: **' + str(
-                                                           match_min - overall_matches) + ' Matches**', color=0x00FF00)
-                            embed_role.set_footer(text='EpicGameName: ' + accname + ' | made with <3 by th3infinity#6720')
-                            logger.info('Rank ' + role.name + ' was given with winrate: ' + str(overall_winRatio_old) + '% to User: ' + str(member.id))
-                            await ctx.send(embed=embed_role)
-                        else:
-                            embed_norole = discord.Embed(title='Win Rate Rank  - Alte Season',
-                                                         description='<@' + str(
-                                                             member.id) + '> fehlen **' + str(
-                                                             round(10 - overall_winRatio_old,
-                                                                   2)) + '%** zum 10% Rang, basierend auf der letzten Season! Für Season 5 Rang fehlen: **' + str(
-                                                             match_min - overall_matches) + ' Matches**',
-                                                         color=0xFF0000)
-                            embed_norole.set_footer(text='EpicGameName: ' + accname + ' | made with <3 by th3infinity#6720')
-                            logger.info('User:' + str(member.id) + ' missing ' + str(10 - overall_winRatio_old) + '%')
-                            await ctx.send(embed=embed_norole)
+                    if overten:
+                        for r in member.roles:
+                            if r.name in roles:
+                                await member.remove_roles(r)
+                        await member.add_roles(role)
+                        await member.add_roles(
+                            discord.utils.get(ctx.message.guild.roles, name='Alte Season'))
+                        embed_role = discord.Embed(title='Win Rate Rank  - Alte Season',
+                                                   description='<@' + str(
+                                                       member.id) + '> wurde basierend auf der letzten Season der Rang **' + role.name + '** gegeben! Winrate letzte Season: **' + str(
+                                                       round(overall_winRatio_old,
+                                                             2)) + '%** Für Season 5 Rang fehlen: **' + str(
+                                                       match_min - overall_matches) + ' Matches**', color=0x00FF00)
+                        embed_role.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
+                        logger.info('Rank ' + role.name + ' was given with winrate: ' + str(overall_winRatio_old) + '% to User: ' + str(member.id))
+                        await ctx.send(embed=embed_role)
                     else:
-                        embed_matches = discord.Embed(title='Win Rate Rank',
-                                                      description='<@' + str(
-                                                          member.id) + '> Zu wenig Spiele in der aktuellen Season! Es fehlen noch **' + str(
-                                                          match_min - overall_matches) + ' Matches**',
-                                                      color=0xFF0000)
-                        embed_matches.add_field(name='Alte Stats',
-                                                value='Melde dich für die **Rangvergabe** basierend auf der **alten Season** beim **Community Support** oder geh in den **Rang anfordern Channel**! Automatische Rangvergabe nicht möglich, da die FNTracker API keine Stats der alten Season mehr sendet. **FeelsBadMan.**')
-                        embed_matches.set_footer(text='EpicGameName: ' + accname + ' | made with <3 by th3infinity#6720')
-                        #embed_matches = discord.Embed(title='Win Rate Rank',
-                        #                              description='<@' + str(
-                        #                                  member.id) + '> Zu wenig Spiele in der aktuellen/letzten Season! Es fehlen noch **' + str(
-                        #                                  match_min - overall_matches) + ' Matches** in der aktuellen Season und **' + str(
-                        #                                  match_min - overall_matches_old) + ' Matches** in der letzten Season!',
-                        #                              color=0xFF0000)
-                        logger.info('Not enough Matches ' + str(overall_matches))
-                        await ctx.send(embed=embed_matches)
+                        embed_norole = discord.Embed(title='Win Rate Rank  - Alte Season',
+                                                     description='<@' + str(
+                                                         member.id) + '> fehlen **' + str(
+                                                         round(10 - overall_winRatio_old,
+                                                               2)) + '%** zum 10% Rang, basierend auf der letzten Season! Für Season 5 Rang fehlen: **' + str(
+                                                         match_min - overall_matches) + ' Matches**',
+                                                     color=0xFF0000)
+                        embed_norole.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
+                        logger.info('User:' + str(member.id) + ' missing ' + str(10 - overall_winRatio_old) + '%')
+                        await ctx.send(embed=embed_norole)
                 else:
-                    count_notfound += 1
-                    await ctx.send('Member: **' + member.display_name + '** not found!')
+                    embed_matches = discord.Embed(title='Win Rate Rank',
+                                                  description='<@' + str(
+                                                      member.id) + '> Zu wenig Spiele in der aktuellen Season! Es fehlen noch **' + str(
+                                                      match_min - overall_matches) + ' Matches**',
+                                                  color=0xFF0000)
+                    embed_matches.add_field(name='Alte Stats',
+                                            value='Melde dich für die **Rangvergabe** basierend auf der **alten Season** beim **Community Support** oder geh in den **Rang anfordern Channel**! Automatische Rangvergabe nicht möglich, da die FNTracker API keine Stats der alten Season mehr sendet. **FeelsBadMan.**')
+                    embed_matches.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
+                    #embed_matches = discord.Embed(title='Win Rate Rank',
+                    #                              description='<@' + str(
+                    #                                  member.id) + '> Zu wenig Spiele in der aktuellen/letzten Season! Es fehlen noch **' + str(
+                    #                                  match_min - overall_matches) + ' Matches** in der aktuellen Season und **' + str(
+                    #                                  match_min - overall_matches_old) + ' Matches** in der letzten Season!',
+                    #                              color=0xFF0000)
+                    logger.info('Not enough Matches ' + str(overall_matches))
+                    await ctx.send(embed=embed_matches)
+            else:
+                count_notfound += 1
+                await ctx.send('Member: **' + member.display_name + '** not found!')
 
-            logger.info('Total Tested: ' + str(count_found + count_notfound) + ' | Found: ' + str(count_found) + ' | Not Found: ' + str(count_notfound))
-            embed_result = discord.Embed(title='Auto Rank - Result',description='Total Tested: ' + str(count_found + count_notfound) + ' | Found: ' + str(count_found) + ' | Not Found: ' + str(count_notfound),color=0x008CFF)
-            embed_result.set_footer(text='made with <3 by th3infinity#6720')
-            await ctx.send(embed=embed_result)
+        logger.info('Total Tested: ' + str(count_found + count_notfound) + ' | Found: ' + str(count_found) + ' | Not Found: ' + str(count_notfound))
+        embed_result = discord.Embed(title='Auto Rank - Result',description='Total Tested: ' + str(count_found + count_notfound) + ' | Found: ' + str(count_found) + ' | Not Found: ' + str(count_notfound),color=0x008CFF)
+        embed_result.set_footer(text='made with ♥ by th3infinity#6720')
+        await ctx.send(embed=embed_result)
     else:
         embed_maint = discord.Embed(title='Maintenance',
                                     description='Bot befindet sich im Maintenance Modus! Rangvergabe deaktiviert. Bitte warten.',
                                     color=0xE88100)
-        embed_maint.set_footer(text='made with <3 by th3infinity#6720')
+        embed_maint.set_footer(text='made with ♥ by th3infinity#6720')
         await ctx.send(embed=embed_maint)
 
 
 @autoRank.error
 async def autoRank_on_error(ctx, error):
+    print(error)
     if isinstance(error, commands.MissingRequiredArgument):
-        embed = discord.Embed(title='autoRank', description='Fehlendes Argument! `-autoRank <roleName>', color=0xFF0000)
-        embed.set_footer(text='made with <3 by th3infinity#6720')
+        logger.error('Missing Arguments for command autoRank (' + str(
+            ctx.message.content) + ') from User: ' + ctx.message.author.name)
+        embed = discord.Embed(title='autoRank', description='Fehlendes Argument! `-autoRank <Rolle>', color=0xFF0000)
+        embed.set_footer(text='made with ♥ by th3infinity#6720')
+        await ctx.send(embed=embed)
+    if isinstance(error, commands.BadArgument):
+        logger.error('Invalid Role for command autoRank (' + str(
+            ctx.message.content) + ') from User: ' + ctx.message.author.name)
+        embed = discord.Embed(title='Auto Rank', description='Ungültige Rolle! `-autoRank <Rolle>`', color=0xFF0000)
+        embed.set_footer(text='made with ♥ by th3infinity#6720')
         await ctx.send(embed=embed)
 
 
@@ -799,7 +844,7 @@ async def getStats(ctx, name, platform, nameConvention=True):
                                        description='<@' + str(
                                            ctx.message.author.id) + '> Accname: **' + name + '** nicht gefunden!',
                                        color=0xFF0000)
-        embed_username.set_footer(text='made with <3 by th3infinity#6720')
+        embed_username.set_footer(text='made with ♥ by th3infinity#6720')
         logger.error('Username not found: ' + name)
         await ctx.send(embed=embed_username)
     else:
@@ -808,7 +853,7 @@ async def getStats(ctx, name, platform, nameConvention=True):
                                               description='Hey <@' + str(
                                                   ctx.message.author.id) + '> wir haben auf unserem Server eine Namenskonvention: `<Fortnitename> | [Spitzname]`',
                                               color=0x008CFF)
-            embed_displayname.set_footer(text='made with <3 by th3infinity#6720')
+            embed_displayname.set_footer(text='made with ♥ by th3infinity#6720')
             await ctx.send(embed=embed_displayname)
 
         logger.info('DisplayName: ' + ctx.message.author.display_name + ' | Used AccName: ' + accname)
@@ -902,10 +947,12 @@ async def getStats(ctx, name, platform, nameConvention=True):
 @rank.error
 async def rank_on_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
+        logger.error('Missing Arguments for command rank (' + str(
+            ctx.message.content) + ') from User: ' + ctx.message.author.name)
         embed = discord.Embed(title='Win Rate Rank',
                               description='Fehlendes Argument! `-rank <' + ', '.join(platforms) + '> <epicGamesName>`',
                               color=0xFF0000)
-        embed.set_footer(text='made with <3 by th3infinity#6720')
+        embed.set_footer(text='made with ♥ by th3infinity#6720')
         await ctx.send(embed=embed)
 
 
@@ -938,7 +985,7 @@ async def getTournaments(ctx):
             tournamentEmbed.add_field(name='Slots', value=egl_t.slots)
             tournamentEmbed.add_field(name='Eintritt', value=egl_t.costs)
             tournamentEmbed.add_field(name='Hoster', value='EGL')
-            tournamentEmbed.set_footer(text='made with <3 by th3infinity#6720')
+            tournamentEmbed.set_footer(text='made with ♥ by th3infinity#6720')
             await (bot.get_channel(tournamentsChannelID)).send(embed=tournamentEmbed)
             egl_posted.append(egl_t.tid)
             tournamentsupdated += 1
@@ -955,7 +1002,7 @@ async def getTournaments(ctx):
             tournamentEmbed.add_field(name='Slots', value=umg_t.slots)
             tournamentEmbed.add_field(name='Eintritt', value=umg_t.costs)
             tournamentEmbed.add_field(name='Hoster', value='UMG')
-            tournamentEmbed.set_footer(text='made with <3 by th3infinity#6720')
+            tournamentEmbed.set_footer(text='made with ♥ by th3infinity#6720')
             await (bot.get_channel(tournamentsChannelID)).send(embed=tournamentEmbed)
             umg_posted.append(umg_t.tid)
             tournamentsupdated += 1
@@ -973,7 +1020,7 @@ async def getTournaments(ctx):
         tournamentEmbed.add_field(name='Slots', value=cmg_t.slots)
         tournamentEmbed.add_field(name='Eintritt', value=cmg_t.costs)
         tournamentEmbed.add_field(name='Hoster', value='CMG')
-        tournamentEmbed.set_footer(text='made with <3 by th3infinity#6720')
+        tournamentEmbed.set_footer(text='made with ♥ by th3infinity#6720')
         await (bot.get_channel(tournamentsChannelID)).send(embed=tournamentEmbed)
 
     logger.info('Number of updated Tournaments: ' + str(tournamentsupdated))
@@ -1183,7 +1230,7 @@ async def exitBot(ctx):
     logger.info('Command -exitBot from User: ' + str(ctx.message.author.id))
     logger.info("Bot Disconnecting...")
     embed = discord.Embed(title='Snipe', description='Bot disconnecting...', color=0xFF0000)
-    embed.set_footer(text='made with <3 by th3infinity#6720')
+    embed.set_footer(text='made with ♥ by th3infinity#6720')
     await ctx.send(embed=embed)
     await bot.logout()
     await bot.close()
@@ -1200,7 +1247,7 @@ async def info(ctx):
     embed.add_field(name='Developer', value='<@198844841977708545>')
     embed.add_field(name='Version', value=version)
     embed.add_field(name='Last Updated', value=lastupdated)
-    embed.set_footer(text='made with <3 by th3infinity#6720')
+    embed.set_footer(text='made with ♥ by th3infinity#6720')
     await ctx.send(embed=embed)
 
 
@@ -1212,7 +1259,7 @@ async def changeLog(ctx):
     embed.add_field(name='Developer', value='<@198844841977708545>')
     embed.add_field(name='Version', value=version)
     embed.add_field(name='Last Updated', value=lastupdated)
-    embed.set_footer(text='made with <3 by th3infinity#6720')
+    embed.set_footer(text='made with ♥ by th3infinity#6720')
     await ctx.send(embed=embed)
 
 
@@ -1238,7 +1285,7 @@ async def on_command_error(ctx, error):
             embed = discord.Embed(title='Stats Bot',
                                   description='Command nicht gefunden. `-commandList` für eine Liste aller Commands',
                                   color=0xFF0000)
-            embed.set_footer(text='made with <3 by th3infinity#6720')
+            embed.set_footer(text='made with ♥ by th3infinity#6720')
             await ctx.send(embed=embed)
 
         if isinstance(error, commands.CheckFailure):
@@ -1246,15 +1293,23 @@ async def on_command_error(ctx, error):
             embed = discord.Embed(title='Stats Bot',
                                   description='Keine Berechtigung für dieses Command!',
                                   color=0xFF0000)
-            embed.set_footer(text='made with <3 by th3infinity#6720')
+            embed.set_footer(text='made with ♥ by th3infinity#6720')
             await ctx.send(embed=embed)
+
+
+async def background_change_presence():
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        await bot.change_presence(activity=discord.Game(name='-info | -commandList'))
+        await asyncio.sleep(10)
+        await bot.change_presence(activity=discord.Game(name='made by th3infinity#6720'))
+        await asyncio.sleep(10)
 
 
 @bot.event
 async def on_ready():
     global logger
     logger = setup_custom_logger('Fortnite Bot')
-    await bot.change_presence(activity=discord.Game(name='-info | -commandList'))
     logger.info('Logged in as:')
     logger.info(bot.user.name)
     logger.info(bot.user.id)
@@ -1265,10 +1320,11 @@ async def on_ready():
     embed.add_field(name='Developer', value='<@198844841977708545>')
     embed.add_field(name='Version', value=version)
     embed.add_field(name='Last Updated', value=lastupdated)
-    embed.set_footer(text='made with <3 by th3infinity#6720')
+    embed.set_footer(text='made with ♥ by th3infinity#6720')
     for guildID in botDatabase:
         if guildID not in ['testToken', 'realToken', 'trnKey', 'lastcmg']:
             await (bot.get_channel(botDatabase[guildID]['botspamID'])).send(embed=embed)
 
 
+bot.loop.create_task(background_change_presence())
 bot.run(TOKEN[0])
