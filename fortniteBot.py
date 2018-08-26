@@ -57,9 +57,9 @@ umg_tournaments = []
 egl_tournaments = []
 cmg_tournaments = []
 
-version = '0.4.1'
-lastupdated = '2018-08-23'
-changelog = '- disable cmg Tournaments(no longer free2enter)\n - added blacklist warning message\n - added option to disable rank command\n - added option to remove rank\n - added option to en/disable old season'
+version = '0.4.2'
+lastupdated = '2018-08-26'
+changelog = '- fixed infinity kd bug'
 
 def has_any_role(member, roles):
     memberroles = []
@@ -856,7 +856,7 @@ async def autoRank(ctx, role: commands.RoleConverter):
 
 @autoRank.error
 async def autoRank_on_error(ctx, error):
-    print(error)
+    #print(error)
     if isinstance(error, commands.MissingRequiredArgument):
         logger.error('Missing Arguments for command autoRank (' + str(
             ctx.message.content) + ') from User: ' + ctx.message.author.name)
@@ -949,6 +949,27 @@ async def getStats(ctx, name, platform, nameConvention=True):
             except KeyError:
                 logger.info("No Old Squad Stats")
 
+            overall_wins_old = int(solostats_old["wins"]) + int(duostats_old["wins"]) + int(squadstats_old["wins"])
+            overall_matches_old = int(solostats_old["matches"]) + int(duostats_old["matches"]) + int(
+                squadstats_old["matches"])
+            overall_kills_old = int(solostats_old["kills"]) + int(duostats_old["kills"]) + int(
+                squadstats_old["kills"])
+
+            if overall_matches_old > 0:
+                if overall_matches_old == overall_wins_old:
+                    overall_kd_old_str = 'infinity'
+                else:
+                    overall_kd_old = overall_kills_old / (overall_matches_old - overall_wins_old)
+                    overall_kd_old_str = str(round(overall_kd_old, 2))
+                overall_winRatio_old = (overall_wins_old / overall_matches_old) * 100
+            else:
+                overall_kd_old_str = 'zero'
+
+            logger.info('Calculation Old Season: Wins: {} | Matches: {} | Kills: {} | KD: {} | WinRatio: {}'.format(
+                overall_wins_old, overall_matches_old, overall_kills_old, overall_kd_old_str,
+                round(overall_winRatio_old, 2)))
+
+
         try:
             solostats["kills"] = response["stats"]["curr_p2"]["kills"]["valueInt"]
             solostats["wins"] = response["stats"]["curr_p2"]["top1"]["valueInt"]
@@ -976,19 +997,7 @@ async def getStats(ctx, name, platform, nameConvention=True):
         except KeyError:
             logger.info("No Squad Stats")
 
-        overall_wins_old = int(solostats_old["wins"]) + int(duostats_old["wins"]) + int(squadstats_old["wins"])
-        overall_matches_old = int(solostats_old["matches"]) + int(duostats_old["matches"]) + int(
-            squadstats_old["matches"])
-        overall_kills_old = int(solostats_old["kills"]) + int(duostats_old["kills"]) + int(
-            squadstats_old["kills"])
 
-        if overall_matches_old > 0:
-            overall_kd_old = overall_kills_old / (overall_matches_old - overall_wins_old)
-            overall_winRatio_old = (overall_wins_old / overall_matches_old) * 100
-
-        logger.info('Calculation Old Season: Wins: {} | Matches: {} | Kills: {} | KD: {} | WinRatio: {}'.format(
-            overall_wins_old, overall_matches_old, overall_kills_old, round(overall_kd_old, 2),
-            round(overall_winRatio_old, 2)))
 
         ################
         overall_wins = int(solostats["wins"]) + int(duostats["wins"]) + int(squadstats["wins"])
@@ -996,11 +1005,18 @@ async def getStats(ctx, name, platform, nameConvention=True):
         overall_kills = int(solostats["kills"]) + int(duostats["kills"]) + int(squadstats["kills"])
 
         if overall_matches > 0:
-            overall_kd = overall_kills / (overall_matches - overall_wins)
+            if overall_matches == overall_wins:
+                overall_kd_str = 'infinity'
+            else:
+                overall_kd = overall_kills / (overall_matches - overall_wins)
+                overall_kd_str = str(round(overall_kd, 2))
+
             overall_winRatio = (overall_wins / overall_matches) * 100
+        else:
+            overall_kd_str = 'zero'
 
         logger.info('Calculation Current Season: Wins: {} | Matches: {} | Kills: {} | KD: {} | WinRatio: {}'.format(
-            overall_wins, overall_matches, overall_kills, round(overall_kd, 2),
+            overall_wins, overall_matches, overall_kills, overall_kd_str,
             round(overall_winRatio, 2)))
 
         results = {'accname': accname, 'overall_matches': overall_matches, 'overall_matches_old': overall_matches_old, 'overall_winRatio': overall_winRatio, 'overall_winRatio_old': overall_winRatio_old}
