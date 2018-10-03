@@ -57,9 +57,9 @@ umg_tournaments = []
 egl_tournaments = []
 cmg_tournaments = []
 
-version = '0.4.2'
-lastupdated = '2018-08-26'
-changelog = '- fixed infinity kd bug'
+version = '0.4.3'
+lastupdated = '2018-09-29'
+changelog = '- added winrate to output'
 
 def has_any_role(member, roles):
     memberroles = []
@@ -658,7 +658,8 @@ async def rank(ctx, platform='remove', *all):
                         embed_matches = discord.Embed(title='Win Rate Rank',
                                                   description='<@' + str(
                                                       ctx.message.author.id) + '> Zu wenig Spiele in der aktuellen Season! Dir fehlen noch **' + str(
-                                                      match_min - overall_matches) + ' Matches**',
+                                                      match_min - overall_matches) + ' Matches**. Deine aktuelle WinRate beträgt **' + str(
+                                                       round(overall_winRatio, 2)) + '%**',
                                                   color=0xFF0000)
                     embed_matches.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
 
