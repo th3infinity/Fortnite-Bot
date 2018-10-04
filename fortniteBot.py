@@ -2,9 +2,10 @@ import discord
 import sys
 import logging
 import json
-import requests
+import aiohttp
 import os
 import asyncio
+
 from time import localtime, strftime
 from discord.ext import commands
 from lxml import html
@@ -57,8 +58,8 @@ umg_tournaments = []
 egl_tournaments = []
 cmg_tournaments = []
 
-version = '0.4.3'
-lastupdated = '2018-09-29'
+version = '0.4.4'
+lastupdated = '2018-10-04'
 changelog = '- added winrate to output'
 
 def has_any_role(member, roles):
@@ -893,27 +894,19 @@ async def autoRank_on_error(ctx, error):
 async def getStats(ctx, name, platform, nameConvention=True):
     guildID = str(ctx.message.guild.id)
     accname = ""
-    overall_kd = 0
-    overall_winRatio = 0
-    overall_matches = 0
-    overall_wins = 0
-    overall_kills = 0
+    overall_kd = overall_winRatio = overall_matches = overall_wins = overall_kills = 0
     solostats = {"kills": 0, "wins": 0, "matches": 0, "kd": 0, "winRatio": 0}
     duostats = {"kills": 0, "wins": 0, "matches": 0, "kd": 0, "winRatio": 0}
     squadstats = {"kills": 0, "wins": 0, "matches": 0, "kd": 0, "winRatio": 0}
 
-    overall_kd_old = 0
-    overall_winRatio_old = 0
-    overall_matches_old = 0
-    overall_wins_old = 0
-    overall_kills_old = 0
+    overall_kd_old = overall_winRatio_old = overall_matches_old = overall_wins_old = overall_kills_old = 0
     solostats_old = {"kills": 0, "wins": 0, "matches": 0, "kd": 0, "winRatio": 0}
     duostats_old = {"kills": 0, "wins": 0, "matches": 0, "kd": 0, "winRatio": 0}
     squadstats_old = {"kills": 0, "wins": 0, "matches": 0, "kd": 0, "winRatio": 0}
 
-    resp = requests.get(url.format(platform.lower(), name), headers=headers)
-
-    response = json.loads(resp.text)
+    async with aiohttp.ClientSession(headers=headers) as session:
+        async with session.get(url.format(platform.lower(), name)) as resp:
+            response = await resp.json()
 
     #print(response)
 
@@ -1068,9 +1061,9 @@ async def getTournaments(ctx):
 
     logger.info('Command -getTournaments from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
     await ctx.send("Updating Turnier Infos... Das könnte eine Weile dauern!")
-    getEGLTournaments()
-    getUMGTournaments()
-    #getCMGTournaments(guildID)
+    await getEGLTournaments()
+    await getUMGTournaments()
+    #await getCMGTournaments(guildID)
 
     tournamentsupdated = 0
 
@@ -1126,9 +1119,10 @@ async def getTournaments(ctx):
     await ctx.send("Erfolgreich Turniere aktualisiert! Es wurden " + str(tournamentsupdated) + " neue Turnier gefunden.")
 
 
-def getEGLTournaments():
-    resp = requests.get("https://egl.tv/tournaments/game/fortnite")
-    tree = html.fromstring(resp.content)
+async def getEGLTournaments():
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://egl.tv/tournaments/game/fortnite") as resp:
+            content = await resp.read()
 
     gameBoxes = tree.xpath('//div[@class="card__cup"]')
 
@@ -1194,9 +1188,10 @@ def getEGLTournaments():
                 #print(newtournament.slots)
 
 
-def getUMGTournaments():
-    resp = requests.get("https://umggaming.com/tournaments/platform/epic-games")
-    tree = html.fromstring(resp.content)
+async def getUMGTournaments():
+    async with aiohttp.ClientSession() as session:
+	    async with session.get("https://umggaming.com/tournaments/platform/epic-games") as resp:
+		    content = await resp.read()
 
     gameBoxes = tree.xpath('//li[@class="col-xs-6 margin-30"]')
 
@@ -1225,8 +1220,10 @@ def getUMGTournaments():
             link = "https://umggaming.com" + allhref[0].attrib['href']
             t_id = link.rpartition('/')[2]
             if t_id not in saveList:
-                resp_slots = requests.get(link)
-                tree_slots = html.fromstring(resp_slots.content)
+                async with aiohttp.ClientSession() as session:
+                    async with session.get("https://umggaming.com/tournaments/platform/epic-games") as resp:
+                        slots_content = await resp.read()
+                tree_slots = html.fromstring(slots_content)
                 slots_ul = tree_slots.xpath('//ul[@class="list-unstyled col-sm-4 col-xs-6"]')
                 if len(slots_ul) > 1:
                     reg_li = slots_ul[0].xpath('.//li[@class="margin-40"]')
@@ -1255,7 +1252,7 @@ def getUMGTournaments():
             #print(newtournament.slots)
 
 
-def getCMGTournaments(guildID):
+async def getCMGTournaments(guildID):
     lasttournament = botDatabase[guildID]['lastcmg']
 
     saveList = []
@@ -1269,11 +1266,13 @@ def getCMGTournaments(guildID):
         lasttournament += 3
 
         t_link = cmgurl.format(lasttournament,lasttournament + 33589)
-        resp = requests.get(t_link, headers=hdr)
-        file = open("respons.txt", "w",encoding='utf-8')
-        file.write(resp.text)
-        file.close()
-        tree = html.fromstring(resp.content)
+        async with aiohttp.ClientSession(headers=hdr) as session:
+            async with session.get(t_link) as resp:
+                with open("respons.txt", "w",encoding='utf-8') as file:
+                    text = await resp.read()
+                    file.write(text)
+					
+        tree = html.fromstring(text)
 
         t_values = tree.xpath('//div[@class="tournament-panel-value"]/text()')
 
