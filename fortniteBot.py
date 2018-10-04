@@ -572,6 +572,11 @@ async def rank(ctx, platform='remove', *all):
                                                    description='<@' + str(
                                                        ctx.message.author.id) + '> dir wurde der Rang **' + role.name + '** gegeben! Deine aktuelle Winrate beträgt: **' + str(
                                                        round(overall_winRatio, 2)) + '%**', color=0x00FF00)
+                        embed_role.add_field(name='Weitere Stats von dir:', value='', inline=False)
+                        embed_role.add_field(name='Kills', value=overall_kills)
+                        embed_role.add_field(name='Wins', value=overall_wins)
+                        embed_role.add_field(name='Matches', value=overall_matches)
+                        embed_role.add_field(name='K/D', value=overall_kd)
                         embed_role.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
                         logger.info('Rank ' + role.name + ' was given with winrate: ' + str(overall_winRatio))
                         await ctx.send(embed=embed_role)
