@@ -493,6 +493,9 @@ async def rank(ctx, platform='remove', *all):
                 overall_winRatio_old = results['overall_winRatio_old']
                 overall_matches = results['overall_matches']
                 overall_matches_old = results['overall_matches_old']
+                overall_kills = results['overall_kills']
+                overall_wins = results['overall_wins']
+                overall_kd = results['overall_kd']
 
                 namedatabase = botDatabase[guildID]['nameDatabase']
                 checkChannelID = botDatabase[guildID]['logChannelID']
