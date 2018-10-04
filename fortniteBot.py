@@ -1020,7 +1020,7 @@ async def getStats(ctx, name, platform, nameConvention=True):
             overall_wins, overall_matches, overall_kills, overall_kd_str,
             round(overall_winRatio, 2)))
 
-        results = {'accname': accname, 'overall_matches': overall_matches, 'overall_matches_old': overall_matches_old, 'overall_winRatio': overall_winRatio, 'overall_winRatio_old': overall_winRatio_old}
+        results = {'accname': accname, 'overall_matches': overall_matches, 'overall_matches_old': overall_matches_old, 'overall_winRatio': overall_winRatio, 'overall_winRatio_old': overall_winRatio_old, 'overall_wins': overall_wins, 'overall_kills': overall_kills, 'overall_kd': overall_kd_str}
 
     return results
 
