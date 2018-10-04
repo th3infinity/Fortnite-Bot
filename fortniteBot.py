@@ -904,7 +904,7 @@ async def getStats(ctx, name, platform, nameConvention=True):
     duostats_old = {"kills": 0, "wins": 0, "matches": 0, "kd": 0, "winRatio": 0}
     squadstats_old = {"kills": 0, "wins": 0, "matches": 0, "kd": 0, "winRatio": 0}
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url.format(platform.lower(), name)) as resp:
             response = await resp.json()
 
@@ -1252,7 +1252,7 @@ async def getUMGTournaments():
             #print(newtournament.slots)
 
 
-def getCMGTournaments(guildID):
+async def getCMGTournaments(guildID):
     lasttournament = botDatabase[guildID]['lastcmg']
 
     saveList = []
