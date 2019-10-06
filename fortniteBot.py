@@ -198,16 +198,18 @@ async def matchMin(ctx, number=-1):
         saveDatabase()
 
         logger.info('Changed Match Min to: ' + str(number))
-        embed_info = discord.Embed(title='Match Minimum',
-                                   description='Match Minimum zu **' + str(botDatabase[guildID]['minGames']) + '** geändert',
-                                   color=0x00FF00)
-        embed_info.set_footer(text='made with ♥ by th3infinity#6720')
-        await ctx.send(embed=embed_info)
+        
+        desc = 'Match Minimum zu **' + str(botDatabase[guildID]['minGames']) + '** geändert'
+        color = 0x00FF00
     else:
-        embed_info = discord.Embed(title='Match Minimum',
-                                   description='Aktuelles Match Minimum: **' + str(botDatabase[guildID]['minGames']) + '**', color=0x008CFF)
-        embed_info.set_footer(text='made with ♥ by th3infinity#6720')
-        await ctx.send(embed=embed_info)
+        desc = 'Aktuelles Match Minimum: **' + str(botDatabase[guildID]['minGames']) + '**'
+        color = 0x008CFF
+        
+    embed_info = discord.Embed(title='Match Minimum',
+                                   description=desc,
+                                   color=color)
+    embed_info.set_footer(text='made with ♥ by th3infinity#6720')
+    await ctx.send(embed=embed_info)
 
 
 @bot.command(hidden=True, pass_context=True, name='setup', aliases=['SETUP', 'Setup'])
