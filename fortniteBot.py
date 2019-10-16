@@ -100,40 +100,9 @@ def saveDatabase():
     databaseFile.close()
 
 
-@bot.command(pass_context=True, name='commandList', aliases=['commandlist', 'cl'], help='Postet eine Liste aller '
-                                                                                        'verfügbaren Commands')
-async def commandList(ctx):
-    guildID = str(ctx.message.guild.id)
-    logger.info('Command -commandList from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
-
-    embed_bot = discord.Embed(title='Bot - Commands', description='', color=0x0000FF)
-    embed_bot.add_field(name='`-info`', value='Postet Stats Bot Info')
-    embed_bot.add_field(name='`-rank <pc|psn|xbl> <epicGameName>`',
-                        value='Gibt dir den entsprechenden Rang je nach Winrate, für Leerzeichen den Namen mit "" '
-                              'schreiben!')
-    embed_bot.add_field(name='`-rank`',
-                        value='Ohne Argumente entfernt der Bot dir deinen WinRate Rang!')
-    embed_bot.add_field(name='`-commandList`', value='Postet Liste aller verfügbaren Commands')
-
-    ###ModOnly
-
-    if is_allowed(ctx):
-        embed_bot.add_field(name='`-disableRank`', value='Aktiviert oder Deaktiviert Rangvergabe')
-        embed_bot.add_field(name='`-oldSeason`', value='Aktiviert oder Deaktiviert Rangvergabe basierend auf Alter Season')
-        embed_bot.add_field(name='`-blacklist`', value='Postet die aktuelle Acc Blacklist für Ranks')
-        embed_bot.add_field(name='`-addBlacklist <name>`', value='Fügt Namen zur Blacklist hinzu')
-        embed_bot.add_field(name='`-removeBlacklist <name>`', value='Entfernt Namen von Blacklist')
-        embed_bot.add_field(name='`-matchMin <number>[Optional]`', value='Ändert das Match Minimum oder zeigt das aktuelle an')
-        embed_bot.add_field(name='`-database`', value='Schickt die aktuelle Nutzungsdatenbank per PN')
-        embed_bot.add_field(name='`-autoRank <Rolle>`', value='Gibt allen Mitgliedern der Role den WinRate Rang')
-        embed_bot.add_field(name='`-setup <botspam Channel> <log Channel> <turnier Channel>`', value='Richtet neuen Server ein oder ändert Channel von vorhandenem Server.')
-        embed_bot.add_field(name='`-allowedChannels <Channel>[optional]`',
-                            value='Add/Remove erlaubte Channel oder zeigt erlaubte Channel an')
-        embed_bot.add_field(name='`-modList <Rolle>[optional]`',
-                            value='Add/Remove Mod Rolle oder zeigt Mod Rollen an')
-    embed_bot.set_footer(text=variables.footerText)
-    await ctx.send(embed=embed_bot)
-
+####################################
+######## Maintenance Stuff #########
+####################################
 
 @bot.command(hidden=True, pass_context=True, name='maintenance', aliases=['maint', 'mt'])
 @commands.check(is_developer)
@@ -165,6 +134,11 @@ async def database(ctx):
     #    await ctx.message.author.send(part)
     await ctx.message.author.send('Nutzerlist Json', file=discord.File(open("database" + guildID + ".txt", "rb")))
     # await ctx.message.author.send(json.dumps(namedatabase,indent=4))
+
+
+####################################
+###### Bot Settings and Setup ######
+####################################
 
 
 @bot.command(hidden=True, pass_context=True, name='blacklist', aliases=['Blacklist', 'bl'])
@@ -437,6 +411,9 @@ async def disableRank(ctx):
     embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
     await ctx.send(embed=embed)
 
+####################################
+############ Ranking ###############
+####################################
 
 @bot.command(pass_context=True, name='rank', aliases=['r', 'rang', 'Rank', 'RANK', 'RANG', 'Rang'], help='Gibt dir basierend auf deiner Winrate den entsprechenden Rang. `-rank <platform> <epicGamesName>`', brief='Rangvergabe basierend auf Winrate')
 @commands.cooldown(1, 15, commands.BucketType.user)
@@ -1053,6 +1030,9 @@ async def rank_on_error(ctx, error):
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
 
+####################################
+######### Tournament Stuff #########
+####################################
 
 @bot.command(hidden=True, pass_context=True, name='getTournaments', aliases=['gettournaments', 'gettour', 'gett', 'gt'])
 @commands.check(is_setup)
@@ -1083,7 +1063,7 @@ async def getTournaments(ctx):
             tournamentEmbed.add_field(name='Slots', value=egl_t.slots)
             tournamentEmbed.add_field(name='Eintritt', value=egl_t.costs)
             tournamentEmbed.add_field(name='Hoster', value='EGL')
-            tournamentembed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
+            tournamentEmbed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
             await (bot.get_channel(tournamentsChannelID)).send(embed=tournamentEmbed)
             egl_posted.append(egl_t.tid)
             tournamentsupdated += 1
@@ -1100,7 +1080,7 @@ async def getTournaments(ctx):
             tournamentEmbed.add_field(name='Slots', value=umg_t.slots)
             tournamentEmbed.add_field(name='Eintritt', value=umg_t.costs)
             tournamentEmbed.add_field(name='Hoster', value='UMG')
-            tournamentembed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
+            tournamentEmbed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
             await (bot.get_channel(tournamentsChannelID)).send(embed=tournamentEmbed)
             umg_posted.append(umg_t.tid)
             tournamentsupdated += 1
@@ -1322,6 +1302,45 @@ def getCMGTournaments(guildID):
     botDatabase[guildID]['lastcmg'] = lasttournament - 3
     saveDatabase()
 
+####################################
+# DEFAULT BOT COMMANDS AND STUFF ###
+####################################
+
+@bot.command(pass_context=True, name='commandList', aliases=['commandlist', 'cl'], help='Postet eine Liste aller '
+                                                                                        'verfügbaren Commands')
+async def commandList(ctx):
+    guildID = str(ctx.message.guild.id)
+    logger.info('Command -commandList from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
+
+    embed_bot = discord.Embed(title='Bot - Commands', description='', color=0x0000FF)
+    embed_bot.add_field(name='`-info`', value='Postet Stats Bot Info')
+    embed_bot.add_field(name='`-rank <pc|psn|xbl> <epicGameName>`',
+                        value='Gibt dir den entsprechenden Rang je nach Winrate, für Leerzeichen den Namen mit "" '
+                              'schreiben!')
+    embed_bot.add_field(name='`-rank`',
+                        value='Ohne Argumente entfernt der Bot dir deinen WinRate Rang!')
+    embed_bot.add_field(name='`-commandList`', value='Postet Liste aller verfügbaren Commands')
+
+    ###ModOnly
+
+    if is_allowed(ctx):
+        embed_bot.add_field(name='`-disableRank`', value='Aktiviert oder Deaktiviert Rangvergabe')
+        embed_bot.add_field(name='`-oldSeason`', value='Aktiviert oder Deaktiviert Rangvergabe basierend auf Alter Season')
+        embed_bot.add_field(name='`-blacklist`', value='Postet die aktuelle Acc Blacklist für Ranks')
+        embed_bot.add_field(name='`-addBlacklist <name>`', value='Fügt Namen zur Blacklist hinzu')
+        embed_bot.add_field(name='`-removeBlacklist <name>`', value='Entfernt Namen von Blacklist')
+        embed_bot.add_field(name='`-matchMin <number>[Optional]`', value='Ändert das Match Minimum oder zeigt das aktuelle an')
+        embed_bot.add_field(name='`-database`', value='Schickt die aktuelle Nutzungsdatenbank per PN')
+        embed_bot.add_field(name='`-autoRank <Rolle>`', value='Gibt allen Mitgliedern der Role den WinRate Rang')
+        embed_bot.add_field(name='`-setup <botspam Channel> <log Channel> <turnier Channel>`', value='Richtet neuen Server ein oder ändert Channel von vorhandenem Server.')
+        embed_bot.add_field(name='`-allowedChannels <Channel>[optional]`',
+                            value='Add/Remove erlaubte Channel oder zeigt erlaubte Channel an')
+        embed_bot.add_field(name='`-modList <Rolle>[optional]`',
+                            value='Add/Remove Mod Rolle oder zeigt Mod Rollen an')
+    embed_bot.set_footer(text=variables.footerText)
+    await ctx.send(embed=embed_bot)
+
+
 @bot.command(hidden=True, pass_context=True, name='exitBot', aliases=['exitbot', 'terminate', 'end', 'quit'])
 @commands.check(is_developer)
 async def exitBot(ctx):
@@ -1357,7 +1376,7 @@ async def changeLog(ctx):
     for vers in reversed(variables.changeLog[-3:]):
         embed.add_field(name='Version {v.nr} ({v.date})'.format(v=vers), value=vers.changes, inline=True)
     #add last 3 changes via loop
-    embed.add_field(name='Developer', value='<@{}>'.format(variables.variables.developerID), inline=False)
+    embed.add_field(name='Developer', value='<@{}>'.format(variables.developerID), inline=False)
     embed.add_field(name='Latest Version', value=variables.changeLog[-1].nr, inline=True)
     embed.add_field(name='Last Updated', value=variables.changeLog[-1].date, inline=True)
     embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
@@ -1411,7 +1430,7 @@ async def background_change_presence():
     while not bot.is_closed():
         await bot.change_presence(activity=discord.Game(name='-info | -commandList'))
         await asyncio.sleep(10)
-        await bot.change_presence(activity=discord.Game(name='made by th3infinity#6720'))
+        await bot.change_presence(activity=discord.Game(name=variables.footerText))
         await asyncio.sleep(10)
 
 
@@ -1427,7 +1446,7 @@ async def on_ready():
     embed = discord.Embed(title='Snipe Bot Just Restarted', description='Here is the current Change Log:', color=0x008CFF)
     for vers in reversed(variables.changeLog[-3:]):
         embed.add_field(name='Version {v.nr} ({v.date})'.format(v=vers), value=vers.changes, inline=True)
-    embed.add_field(name='Developer', value='<@{}>'.format(variables.variables.developerID), inline=False)
+    embed.add_field(name='Developer', value='<@{}>'.format(variables.developerID), inline=False)
     embed.add_field(name='Latest Version', value=variables.changeLog[-1].nr, inline=True)
     embed.add_field(name='Last Updated', value=variables.changeLog[-1].date, inline=True)
     embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
