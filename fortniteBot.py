@@ -94,12 +94,6 @@ async def is_setup(ctx):
     return issetup
 
 
-def saveDatabase():
-    with open("database.txt", "w") as databaseFile:
-        json.dump(botDatabase, databaseFile, sort_keys=True)
-    databaseFile.close()
-
-
 ####################################
 ######## Maintenance Stuff #########
 ####################################
@@ -117,6 +111,12 @@ async def maintenance(ctx):
     embed_maint = discord.Embed(title='Maintenance', description=answer, color=0xE88100)
     embed_maint.set_footer(text=variables.footerText)
     await ctx.send(embed=embed_maint)
+
+
+def saveDatabase():
+    with open("database.txt", "w") as databaseFile:
+        json.dump(botDatabase, databaseFile, sort_keys=True)
+    databaseFile.close()
 
 
 @bot.command(hidden=True, pass_context=True, name='database', aliases=['db'])
@@ -264,6 +264,10 @@ async def allowedChannels_on_error(ctx, error):
         await ctx.send(embed=embed)
 
 
+#
+# Command to print current ModList and add/remove Roles
+# @parameter role: can be empty to print out, otherwise the role name/id to add/remove
+#
 @bot.command(hidden=True, pass_context=True, name='modList', aliases=['modlist', 'modls', 'modl', 'ml'])
 @commands.check(is_setup)
 @commands.check(is_allowed)
@@ -307,7 +311,10 @@ async def modList_on_error(ctx, error):
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
 
-
+#
+# Add Names to the ranking blacklist
+# @parameter name: player name (String)
+#
 @bot.command(hidden=True, pass_context=True, name='addBlacklist', aliases=['addblacklist', 'addbl', 'bl+'])
 @commands.check(is_setup)
 @commands.check(is_allowed)
@@ -342,6 +349,10 @@ async def addBlacklist_on_error(ctx, error):
         await ctx.send(embed=embed)
 
 
+#
+# Remove names from the ranking blacklist
+# @parameter name: player name (String)
+#
 @bot.command(hidden=True, pass_context=True, name='removeBlacklist', aliases=['removeblacklist', 'removebl', 'bl-'])
 @commands.check(is_setup)
 @commands.check(is_allowed)
@@ -376,6 +387,9 @@ async def removeBlacklist_on_error(ctx, error):
         await ctx.send(embed=embed)
 
 
+#
+# Command to toggle oldSeason checking for ranking
+#
 @bot.command(hidden=True, pass_context=True, name='oldSeason', aliases=['oldseason', 'oseason', 'oldS', 'olds'])
 @commands.check(is_setup)
 @commands.check(is_allowed)
@@ -394,6 +408,9 @@ async def oldSeason(ctx):
     await ctx.send(embed=embed)
 
 
+#
+# Disable Ranking Command
+#
 @bot.command(hidden=True, pass_context=True, name='disableRank', aliases=['disablerank', 'disabler', 'disableR', 'disRank', 'disrank', 'disr'])
 @commands.check(is_setup)
 @commands.check(is_allowed)
@@ -415,6 +432,11 @@ async def disableRank(ctx):
 ############ Ranking ###############
 ####################################
 
+#
+# Command to give you certain discord role based on your game rank
+# @parameter platform: gaming platform 'pc', 'psn', 'xbl'
+# @parameter name: player name
+#
 @bot.command(pass_context=True, name='rank', aliases=['r', 'rang', 'Rank', 'RANK', 'RANG', 'Rang'], help='Gibt dir basierend auf deiner Winrate den entsprechenden Rang. `-rank <platform> <epicGamesName>`', brief='Rangvergabe basierend auf Winrate')
 @commands.cooldown(1, 15, commands.BucketType.user)
 @commands.check(is_setup)
@@ -668,6 +690,10 @@ async def rank(ctx, platform='remove', *all):
         await ctx.send(embed=embed_maint)
 
 
+#
+# Command to auto rank all users from given role
+# @paramter role: role name or id
+#
 @bot.command(hidden=True, pass_context=True, name='autoRank', aliases=['autorank', 'autorang', 'ar', 'autoRang'])
 @commands.check(is_setup)
 @commands.check(is_allowed)
@@ -865,7 +891,9 @@ async def autoRank_on_error(ctx, error):
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
 
-
+#
+# Helper Function to get player stats
+#
 async def getStats(ctx, name, platform, nameConvention=True):
     guildID = str(ctx.message.guild.id)
     accname = ""
@@ -1034,6 +1062,9 @@ async def rank_on_error(ctx, error):
 ######### Tournament Stuff #########
 ####################################
 
+#
+# Command to fetch current tournament data
+#
 @bot.command(hidden=True, pass_context=True, name='getTournaments', aliases=['gettournaments', 'gettour', 'gett', 'gt'])
 @commands.check(is_setup)
 @commands.check(is_allowed)
@@ -1306,6 +1337,9 @@ def getCMGTournaments(guildID):
 # DEFAULT BOT COMMANDS AND STUFF ###
 ####################################
 
+#
+# Prints available commands to the user (checks for permission)
+#
 @bot.command(pass_context=True, name='commandList', aliases=['commandlist', 'cl'], help='Postet eine Liste aller '
                                                                                         'verfügbaren Commands')
 async def commandList(ctx):
@@ -1340,7 +1374,9 @@ async def commandList(ctx):
     embed_bot.set_footer(text=variables.footerText)
     await ctx.send(embed=embed_bot)
 
-
+#
+# Kills the bot
+#
 @bot.command(hidden=True, pass_context=True, name='exitBot', aliases=['exitbot', 'terminate', 'end', 'quit'])
 @commands.check(is_developer)
 async def exitBot(ctx):
@@ -1353,7 +1389,9 @@ async def exitBot(ctx):
     await bot.close()
     sys.exit()
 
-
+#
+# Print some bot info
+#
 @bot.command(pass_context=True, name='info', aliases=['Info', 'i'], help='Postet eine Info zum Bot')
 async def info(ctx):
     logger.info('Command -info from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + str(ctx.message.guild.id) + ")")
@@ -1367,7 +1405,9 @@ async def info(ctx):
     embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
     await ctx.send(embed=embed)
 
-
+#
+# Show last changelogs
+#
 @bot.command(pass_context=True, name='changeLog', aliases=['changelog', 'clog'], help='Postet den aktuellen Bot '
                                                                                       'ChangeLog')
 async def changeLog(ctx):
