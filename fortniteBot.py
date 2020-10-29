@@ -501,25 +501,25 @@ async def rank(ctx, platform='remove', *all):
                 if (overall_matches >= match_min):
                     overten = True
                     if (round(overall_winRatio) >= 80):
-                        role = discord.utils.get(ctx.message.guild.roles, name='80%+')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['80'])
                     elif (round(overall_winRatio) >= 70):
-                        role = discord.utils.get(ctx.message.guild.roles, name='70%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['70'])
                     elif (round(overall_winRatio) >= 60):
-                        role = discord.utils.get(ctx.message.guild.roles, name='60%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['60'])
                     elif (round(overall_winRatio) >= 50):
-                        role = discord.utils.get(ctx.message.guild.roles, name='50%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['50'])
                     elif (round(overall_winRatio) >= 40):
-                        role = discord.utils.get(ctx.message.guild.roles, name='40%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['40'])
                     elif (round(overall_winRatio) >= 30):
-                        role = discord.utils.get(ctx.message.guild.roles, name='30%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['30'])
                     elif (round(overall_winRatio) >= 25):
-                        role = discord.utils.get(ctx.message.guild.roles, name='25%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['25'])
                     elif (round(overall_winRatio) >= 20):
-                        role = discord.utils.get(ctx.message.guild.roles, name='20%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['20'])
                     elif (round(overall_winRatio) >= 15):
-                        role = discord.utils.get(ctx.message.guild.roles, name='15%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['15'])
                     elif (round(overall_winRatio) >= 10):
-                        role = discord.utils.get(ctx.message.guild.roles, name='10%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['10'])
                     else:
                         overten = False
 
