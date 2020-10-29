@@ -25,7 +25,6 @@ url = "https://api.fortnitetracker.com/v1/profile/{}/{}"
 cmgurl = "https://www.checkmategaming.com/tournament/pc/fortnite/-80-free-amateur-global-2v2-fortnite-br-1nd-{}-{}"
 headers = {"TRN-Api-Key": botDatabase['trnKey']}
 platforms = ['pc', 'psn', 'xbl']
-roles = ['80%+', '70%', '60%', '50%', '40%', '30%', '25%', '20%', '15%', '10%']
 maint = False
 localTimezone = tz.tzlocal()
 
@@ -426,7 +425,7 @@ async def rank(ctx, platform='remove', *all):
         logger.info('Command -rank from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
         if platform.lower() == 'remove':
             for r in ctx.message.author.roles:
-                if r.name in roles:
+                if r.name in variables.rankNames.values():
                     await ctx.message.author.remove_roles(r)
                 if r.name == 'Alte Season':
                     await ctx.message.author.remove_roles(r)
@@ -538,7 +537,7 @@ async def rank(ctx, platform='remove', *all):
 
                     if overten:
                         for r in ctx.message.author.roles:
-                            if r.name in roles:
+                            if r.name in variables.rankNames.values():
                                 await ctx.message.author.remove_roles(r)
                             if r.name == 'Alte Season':
                                 await ctx.message.author.remove_roles(r)
@@ -609,7 +608,7 @@ async def rank(ctx, platform='remove', *all):
 
                     if overten:
                         for r in ctx.message.author.roles:
-                            if r.name in roles:
+                            if r.name in variables.rankNames.values():
                                 await ctx.message.author.remove_roles(r)
                         await ctx.message.author.add_roles(role)
                         await ctx.message.author.add_roles(
@@ -733,7 +732,7 @@ async def autoRank(ctx, role: commands.RoleConverter):
 
                     if overten:
                         for r in member.roles:
-                            if r.name in roles:
+                            if r.name in variables.rankNames.values():
                                 await member.remove_roles(r)
                             if r.name == 'Alte Season':
                                 await member.remove_roles(r)
@@ -795,7 +794,7 @@ async def autoRank(ctx, role: commands.RoleConverter):
 
                     if overten:
                         for r in member.roles:
-                            if r.name in roles:
+                            if r.name in variables.rankNames.values():
                                 await member.remove_roles(r)
                         await member.add_roles(role)
                         await member.add_roles(
