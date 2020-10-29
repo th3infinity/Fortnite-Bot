@@ -206,14 +206,14 @@ async def setup_on_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         logger.error('Missing Arguments for command setup (' + str(ctx.message.content) + ') from User: ' + ctx.message.author.name)
         embed = discord.Embed(title='Setup', description='Fehlende Argumente! `-setup <botspam Channel> <log '
-                                                         'Channel> <turnier Channel>`', color=0xFF0000)
+                                                         'Channel> <turnier Channel>`', color=0xFF0001)
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
     if isinstance(error, commands.BadArgument):
         logger.error('Invalid Channel for command setup (' + str(
             ctx.message.content) + ') from User: ' + ctx.message.author.name)
         embed = discord.Embed(title='Setup', description='Ungültiger Channel! `-setup <botspam Channel> <log '
-                                                         'Channel> <turnier Channel>`', color=0xFF0000)
+                                                         'Channel> <turnier Channel>`', color=0xFF0001)
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
 
@@ -250,7 +250,7 @@ async def allowedChannels(ctx,channel: commands.TextChannelConverter = ''):
         saveDatabase()
     else:
         embed.description = 'Ungültiges Channel Format! Gültig: ID, Erwähnung(#Channel), Name'
-        embed.colour = 0xFF0000
+        embed.colour = 0xFF0001
     await ctx.send(embed=embed)
 
 
@@ -259,7 +259,7 @@ async def allowedChannels_on_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         logger.error('Invalid Channel for command allowedChannels (' + str(
             ctx.message.content) + ') from User: ' + ctx.message.author.name)
-        embed = discord.Embed(title='Erlaubte Channel', description='Ungültiger Channel! `-allowedChannels <Channel>`', color=0xFF0000)
+        embed = discord.Embed(title='Erlaubte Channel', description='Ungültiger Channel! `-allowedChannels <Channel>`', color=0xFF0001)
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
 
@@ -294,7 +294,7 @@ async def modList(ctx,role: commands.RoleConverter = ''):
         saveDatabase()
     else:
         embed.description = 'Ungültiges Rollen Format! Gültig: ID, Erwähnung(@Role), Name'
-        embed.colour = 0xFF0000
+        embed.colour = 0xFF0001
     await ctx.send(embed=embed)
 
 
@@ -303,7 +303,7 @@ async def modList_on_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         logger.error('Invalid Role for command modList (' + str(
             ctx.message.content) + ') from User: ' + ctx.message.author.name)
-        embed = discord.Embed(title='Moderatoren', description='Ungültige Rolle! `-modList <Rolle>`', color=0xFF0000)
+        embed = discord.Embed(title='Moderatoren', description='Ungültige Rolle! `-modList <Rolle>`', color=0xFF0001)
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
 
@@ -318,7 +318,7 @@ async def addBlacklist(ctx, *name):
 
     if blname.lower() in (n.lower() for n in botDatabase[guildID]['blacklist']):
         embed_already = discord.Embed(title='Blacklist',
-                                      description='Name **' + blname + '** schon auf der Blacklist!', color=0xFF0000)
+                                      description='Name **' + blname + '** schon auf der Blacklist!', color=0xFF0001)
         embed_already.set_footer(text=variables.footerText)
         logger.info('name: ' + blname + ' already on blacklist')
         await ctx.send(embed=embed_already)
@@ -337,7 +337,7 @@ async def addBlacklist_on_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         logger.error('Missing Arguments for command addBlacklist (' + str(
             ctx.message.content) + ') from User: ' + ctx.message.author.name)
-        embed = discord.Embed(title='Blacklist', description='Fehlendes Argument! `-addBlacklist <name>', color=0xFF0000)
+        embed = discord.Embed(title='Blacklist', description='Fehlendes Argument! `-addBlacklist <name>', color=0xFF0001)
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
 
@@ -360,7 +360,7 @@ async def removeBlacklist(ctx, *name):
         await ctx.send(embed=embed_success)
     else:
         embed_error = discord.Embed(title='Blacklist',
-                                    description='Name **' + blname + '** nicht in der Blacklist!', color=0xFF0000)
+                                    description='Name **' + blname + '** nicht in der Blacklist!', color=0xFF0001)
         embed_error.set_footer(text=variables.footerText)
         logger.info('name: ' + blname + ' not in blacklist')
         await ctx.send(embed=embed_error)
@@ -371,7 +371,7 @@ async def removeBlacklist_on_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         logger.error('Missing Arguments for command removeBlacklist (' + str(
             ctx.message.content) + ') from User: ' + ctx.message.author.name)
-        embed = discord.Embed(title='Blacklist', description='Fehlendes Argument! `-removeBlacklist <name>', color=0xFF0000)
+        embed = discord.Embed(title='Blacklist', description='Fehlendes Argument! `-removeBlacklist <name>', color=0xFF0001)
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
 
@@ -440,13 +440,13 @@ async def rank(ctx, platform='remove', *all):
         elif len(all) == 0:
             embed_noname = discord.Embed(title="Win Rate Rang",
                                          description='Kein Accoutnname angegeben! `-rank pc accname`',
-                                         color=0xFF0000)
+                                         color=0xFF0001)
             embed_noname.set_footer(text=variables.footerText)
             logger.error('No Accname give')
             await ctx.send(embed=embed_noname)
         elif platform.lower() not in platforms:
             embed_platform = discord.Embed(title='Win Rate Rank',
-                                           description='Ungültige Plattform! <' + ', '.join(platforms) + '>', color=0xFF0000)
+                                           description='Ungültige Plattform! <' + ', '.join(platforms) + '>', color=0xFF0001)
             embed_platform.set_footer(text=variables.footerText)
 
             logger.error('No valid Mode: ' + platform)
@@ -454,7 +454,7 @@ async def rank(ctx, platform='remove', *all):
         elif name.lower() in (n.lower() for n in botDatabase[guildID]['blacklist']):
             embed_blacklist = discord.Embed(title='Win Rate Rank', description='<@' + str(
                 ctx.message.author.id) + '> AccName **' + name.lower() + '** ist blockiert! Falls du der Eigentümer des Accounts bist wende dich an jemanden vom Team!',
-                                            color=0xFF0000)
+                                            color=0xFF0001)
             embed_blacklist.set_footer(text=variables.footerText)
             logger.error('Name on blacklist: ' + name.lower())
             await ctx.send(embed=embed_blacklist)
@@ -560,7 +560,7 @@ async def rank(ctx, platform='remove', *all):
                                                      description='<@' + str(
                                                          ctx.message.author.id) + '> dir fehlen **' + str(
                                                          round(10 - overall_winRatio, 2)) + '%** zum 10% Rang!',
-                                                     color=0xFF0000)
+                                                     color=0xFF0001)
                         embed_norole.add_field(name='Weitere Stats von dir:', value='', inline=False)
                         embed_norole.add_field(name='Matches', value=str(overall_matches))
                         embed_norole.add_field(name='Wins', value=str(overall_wins))
@@ -630,7 +630,7 @@ async def rank(ctx, platform='remove', *all):
                                                          round(10 - overall_winRatio_old,
                                                                2)) + '%** zum 10% Rang, basierend auf der letzten Season! Für Season 5 Rang fehlen dir: **' + str(
                                                        match_min - overall_matches) + ' Matches**',
-                                                     color=0xFF0000)
+                                                     color=0xFF0001)
                         embed_norole.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
                         logger.info('User missing ' + str(10 - overall_winRatio_old) + '%')
                         await ctx.send(embed=embed_norole)
@@ -641,14 +641,14 @@ async def rank(ctx, platform='remove', *all):
                                                           ctx.message.author.id) + '> Zu wenig Spiele in der aktuellen/letzten Season! Dir fehlen noch **' + str(
                                                           match_min - overall_matches) + ' Matches** in der aktuellen Season und **' + str(
                                                           match_min - overall_matches_old) + ' Matches** in der letzten Season!',
-                                                      color=0xFF0000)
+                                                      color=0xFF0001)
                     else:
                         embed_matches = discord.Embed(title='Win Rate Rank',
                                                   description='<@' + str(
                                                       ctx.message.author.id) + '> Zu wenig Spiele in der aktuellen Season! Dir fehlen noch **' + str(
                                                       match_min - overall_matches) + ' Matches**. Deine aktuelle WinRate beträgt **' + str(
                                                        round(overall_winRatio, 2)) + '%**',
-                                                  color=0xFF0000)
+                                                  color=0xFF0001)
                         embed_matches.add_field(name='Weitere Stats von dir:', value='', inline=False)
                         embed_matches.add_field(name='Matches', value=str(overall_matches))
                         embed_matches.add_field(name='Wins', value=str(overall_wins))
@@ -750,7 +750,7 @@ async def autoRank(ctx, role: commands.RoleConverter):
                                                      description='<@' + str(
                                                          member.id) + '> fehlen **' + str(
                                                          round(10 - overall_winRatio, 2)) + '%** zum 10% Rang!',
-                                                     color=0xFF0000)
+                                                     color=0xFF0001)
                         embed_norole.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
                         logger.info('User: ' + str(member.id) + ' missing ' + str(10 - overall_winRatio) + '%')
                         await ctx.send(embed=embed_norole)
@@ -816,7 +816,7 @@ async def autoRank(ctx, role: commands.RoleConverter):
                                                          round(10 - overall_winRatio_old,
                                                                2)) + '%** zum 10% Rang, basierend auf der letzten Season! Für Season 5 Rang fehlen: **' + str(
                                                          match_min - overall_matches) + ' Matches**',
-                                                     color=0xFF0000)
+                                                     color=0xFF0001)
                         embed_norole.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
                         logger.info('User:' + str(member.id) + ' missing ' + str(10 - overall_winRatio_old) + '%')
                         await ctx.send(embed=embed_norole)
@@ -826,7 +826,7 @@ async def autoRank(ctx, role: commands.RoleConverter):
                                                       member.id) + '> Zu wenig Spiele in der aktuellen/letzten Season! Es fehlen noch **' + str(
                                                       match_min - overall_matches) + ' Matches** in der aktuellen Season und **' + str(
                                                       match_min - overall_matches_old) + ' Matches** in der letzten Season!',
-                                                  color=0xFF0000)
+                                                  color=0xFF0001)
                     embed_matches.set_footer(text='EpicGameName: ' + accname + ' | made with ♥ by th3infinity#6720')
 
                     logger.info('Not enough Matches ' + str(overall_matches))
@@ -855,13 +855,13 @@ async def autoRank_on_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         logger.error('Missing Arguments for command autoRank (' + str(
             ctx.message.content) + ') from User: ' + ctx.message.author.name)
-        embed = discord.Embed(title='autoRank', description='Fehlendes Argument! `-autoRank <Rolle>', color=0xFF0000)
+        embed = discord.Embed(title='autoRank', description='Fehlendes Argument! `-autoRank <Rolle>', color=0xFF0001)
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
     if isinstance(error, commands.BadArgument):
         logger.error('Invalid Role for command autoRank (' + str(
             ctx.message.content) + ') from User: ' + ctx.message.author.name)
-        embed = discord.Embed(title='Auto Rank', description='Ungültige Rolle! `-autoRank <Rolle>`', color=0xFF0000)
+        embed = discord.Embed(title='Auto Rank', description='Ungültige Rolle! `-autoRank <Rolle>`', color=0xFF0001)
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
 
@@ -900,7 +900,7 @@ async def getStats(ctx, name, platform, nameConvention=True):
         embed_username = discord.Embed(title='Win Rate Rank',
                                        description='<@' + str(
                                            ctx.message.author.id) + '> Accname: **' + name + '** nicht gefunden!',
-                                       color=0xFF0000)
+                                       color=0xFF0001)
         embed_username.set_footer(text=variables.footerText)
         logger.error('Username not found: ' + name)
         await ctx.send(embed=embed_username)
@@ -1026,7 +1026,7 @@ async def rank_on_error(ctx, error):
             ctx.message.content) + ') from User: ' + ctx.message.author.name)
         embed = discord.Embed(title='Win Rate Rank',
                               description='Fehlendes Argument! `-rank <' + ', '.join(platforms) + '> <epicGamesName>`',
-                              color=0xFF0000)
+                              color=0xFF0001)
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
 
@@ -1346,7 +1346,7 @@ async def commandList(ctx):
 async def exitBot(ctx):
     logger.info('Command -exitBot from User: ' + str(ctx.message.author.id))
     logger.info("Bot Disconnecting...")
-    embed = discord.Embed(title='Disconnect', description='Bot disconnecting...', color=0xFF0000)
+    embed = discord.Embed(title='Disconnect', description='Bot disconnecting...', color=0xFF0001)
     embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
     await ctx.send(embed=embed)
     await bot.logout()
@@ -1404,7 +1404,7 @@ async def on_command_error(ctx, error):
             logger.error('Command not found: ' + ctx.message.content + ' from User: ' + ctx.message.author.name)
             embed = discord.Embed(title='Stats Bot',
                                   description='Command nicht gefunden. `-commandList` für eine Liste aller Commands',
-                                  color=0xFF0000)
+                                  color=0xFF0001)
             embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
             await ctx.send(embed=embed)
 
@@ -1412,7 +1412,7 @@ async def on_command_error(ctx, error):
             logger.error('No Permission for Command: ' + ctx.message.content + ' from User: ' + ctx.message.author.name)
             embed = discord.Embed(title='Stats Bot',
                                   description='Keine Berechtigung für dieses Command!',
-                                  color=0xFF0000)
+                                  color=0xFF0001)
             embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
             await ctx.send(embed=embed)
 
@@ -1420,7 +1420,7 @@ async def on_command_error(ctx, error):
             logger.error('Command on Cooldown: ' + ctx.message.content + ' from User: ' + ctx.message.author.name)
             embed = discord.Embed(title='Stats Bot',
                                   description='Command is on cooldown. Nur alle 15 Sekunden!',
-                                  color=0xFF0000)
+                                  color=0xFF0001)
             embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
             await ctx.send(embed=embed)
 
