@@ -21,8 +21,6 @@ databaseFile.close()
 TOKEN = [botDatabase['testToken'],botDatabase['realToken']]
 client = discord.Client()
 bot = commands.Bot(command_prefix='-', description="Fortnite Bot made by th3infinity#6720")
-url = "https://api.fortnitetracker.com/v1/profile/{}/{}"
-cmgurl = "https://www.checkmategaming.com/tournament/pc/fortnite/-80-free-amateur-global-2v2-fortnite-br-1nd-{}-{}"
 headers = {"TRN-Api-Key": botDatabase['trnKey']}
 platforms = ['pc', 'psn', 'xbl']
 roles = ['80%+', '70%', '60%', '50%', '40%', '30%', '25%', '20%', '15%', '10%']
@@ -887,7 +885,7 @@ async def getStats(ctx, name, platform, nameConvention=True):
     duostats_old = {"kills": 0, "wins": 0, "matches": 0, "kd": 0, "winRatio": 0}
     squadstats_old = {"kills": 0, "wins": 0, "matches": 0, "kd": 0, "winRatio": 0}
 
-    resp = requests.get(url.format(platform.lower(), name), headers=headers)
+    resp = requests.get(variables.url.format(platform.lower(), name), headers=headers)
 
     response = json.loads(resp.text)
 
@@ -1247,7 +1245,7 @@ def getCMGTournaments(guildID):
     while nexttournament:
         lasttournament += 3
 
-        t_link = cmgurl.format(lasttournament,lasttournament + 33589)
+        t_link = variables.cmgurl.format(lasttournament,lasttournament + 33589)
         resp = requests.get(t_link, headers=hdr)
         file = open("respons.txt", "w",encoding='utf-8')
         file.write(resp.text)

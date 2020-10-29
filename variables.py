@@ -3,6 +3,8 @@ footerText = 'made with ♥ by th3infinity#6720'
 botID = 470506590647091211 #TestBot
 #botID = 511332522807001119 #RealBot
 changeLog = []
+url = "https://api.fortnitetracker.com/v1/profile/{}/{}"
+cmgurl = "https://www.checkmategaming.com/tournament/pc/fortnite/-80-free-amateur-global-2v2-fortnite-br-1nd-{}-{}"
 
 class Version:
     nr = "0"
