@@ -3,6 +3,7 @@ footerText = 'made with ♥ by th3infinity#6720'
 botID = 470506590647091211 #TestBot
 #botID = 511332522807001119 #RealBot
 changeLog = []
+platforms = ['pc', 'psn', 'xbl']
 
 class Version:
     nr = "0"

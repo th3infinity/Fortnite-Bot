@@ -24,7 +24,6 @@ bot = commands.Bot(command_prefix='-', description="Fortnite Bot made by th3infi
 url = "https://api.fortnitetracker.com/v1/profile/{}/{}"
 cmgurl = "https://www.checkmategaming.com/tournament/pc/fortnite/-80-free-amateur-global-2v2-fortnite-br-1nd-{}-{}"
 headers = {"TRN-Api-Key": botDatabase['trnKey']}
-platforms = ['pc', 'psn', 'xbl']
 roles = ['80%+', '70%', '60%', '50%', '40%', '30%', '25%', '20%', '15%', '10%']
 maint = False
 localTimezone = tz.tzlocal()
@@ -444,9 +443,9 @@ async def rank(ctx, platform='remove', *all):
             embed_noname.set_footer(text=variables.footerText)
             logger.error('No Accname give')
             await ctx.send(embed=embed_noname)
-        elif platform.lower() not in platforms:
+        elif platform.lower() not in variables.platforms:
             embed_platform = discord.Embed(title='Win Rate Rank',
-                                           description='Ungültige Plattform! <' + ', '.join(platforms) + '>', color=0xFF0000)
+                                           description='Ungültige Plattform! <' + ', '.join(variables.platforms) + '>', color=0xFF0000)
             embed_platform.set_footer(text=variables.footerText)
 
             logger.error('No valid Mode: ' + platform)
@@ -1025,7 +1024,7 @@ async def rank_on_error(ctx, error):
         logger.error('Missing Arguments for command rank (' + str(
             ctx.message.content) + ') from User: ' + ctx.message.author.name)
         embed = discord.Embed(title='Win Rate Rank',
-                              description='Fehlendes Argument! `-rank <' + ', '.join(platforms) + '> <epicGamesName>`',
+                              description='Fehlendes Argument! `-rank <' + ', '.join(variables.platforms) + '> <epicGamesName>`',
                               color=0xFF0000)
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
