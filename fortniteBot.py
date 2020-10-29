@@ -25,7 +25,6 @@ url = "https://api.fortnitetracker.com/v1/profile/{}/{}"
 cmgurl = "https://www.checkmategaming.com/tournament/pc/fortnite/-80-free-amateur-global-2v2-fortnite-br-1nd-{}-{}"
 headers = {"TRN-Api-Key": botDatabase['trnKey']}
 platforms = ['pc', 'psn', 'xbl']
-roles = ['80%+', '70%', '60%', '50%', '40%', '30%', '25%', '20%', '15%', '10%']
 maint = False
 localTimezone = tz.tzlocal()
 
@@ -426,7 +425,7 @@ async def rank(ctx, platform='remove', *all):
         logger.info('Command -rank from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
         if platform.lower() == 'remove':
             for r in ctx.message.author.roles:
-                if r.name in roles:
+                if r.name in variables.rankNames.values():
                     await ctx.message.author.remove_roles(r)
                 if r.name == 'Alte Season':
                     await ctx.message.author.remove_roles(r)
@@ -501,25 +500,25 @@ async def rank(ctx, platform='remove', *all):
                 if (overall_matches >= match_min):
                     overten = True
                     if (round(overall_winRatio) >= 80):
-                        role = discord.utils.get(ctx.message.guild.roles, name='80%+')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['80'])
                     elif (round(overall_winRatio) >= 70):
-                        role = discord.utils.get(ctx.message.guild.roles, name='70%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['70'])
                     elif (round(overall_winRatio) >= 60):
-                        role = discord.utils.get(ctx.message.guild.roles, name='60%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['60'])
                     elif (round(overall_winRatio) >= 50):
-                        role = discord.utils.get(ctx.message.guild.roles, name='50%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['50'])
                     elif (round(overall_winRatio) >= 40):
-                        role = discord.utils.get(ctx.message.guild.roles, name='40%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['40'])
                     elif (round(overall_winRatio) >= 30):
-                        role = discord.utils.get(ctx.message.guild.roles, name='30%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['30'])
                     elif (round(overall_winRatio) >= 25):
-                        role = discord.utils.get(ctx.message.guild.roles, name='25%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['25'])
                     elif (round(overall_winRatio) >= 20):
-                        role = discord.utils.get(ctx.message.guild.roles, name='20%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['20'])
                     elif (round(overall_winRatio) >= 15):
-                        role = discord.utils.get(ctx.message.guild.roles, name='15%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['15'])
                     elif (round(overall_winRatio) >= 10):
-                        role = discord.utils.get(ctx.message.guild.roles, name='10%')
+                        role = discord.utils.get(ctx.message.guild.roles, name=variables.rankNames['10'])
                     else:
                         overten = False
 
@@ -538,7 +537,7 @@ async def rank(ctx, platform='remove', *all):
 
                     if overten:
                         for r in ctx.message.author.roles:
-                            if r.name in roles:
+                            if r.name in variables.rankNames.values():
                                 await ctx.message.author.remove_roles(r)
                             if r.name == 'Alte Season':
                                 await ctx.message.author.remove_roles(r)
@@ -609,7 +608,7 @@ async def rank(ctx, platform='remove', *all):
 
                     if overten:
                         for r in ctx.message.author.roles:
-                            if r.name in roles:
+                            if r.name in variables.rankNames.values():
                                 await ctx.message.author.remove_roles(r)
                         await ctx.message.author.add_roles(role)
                         await ctx.message.author.add_roles(
@@ -733,7 +732,7 @@ async def autoRank(ctx, role: commands.RoleConverter):
 
                     if overten:
                         for r in member.roles:
-                            if r.name in roles:
+                            if r.name in variables.rankNames.values():
                                 await member.remove_roles(r)
                             if r.name == 'Alte Season':
                                 await member.remove_roles(r)
@@ -795,7 +794,7 @@ async def autoRank(ctx, role: commands.RoleConverter):
 
                     if overten:
                         for r in member.roles:
-                            if r.name in roles:
+                            if r.name in variables.rankNames.values():
                                 await member.remove_roles(r)
                         await member.add_roles(role)
                         await member.add_roles(
