@@ -21,12 +21,7 @@ databaseFile.close()
 TOKEN = [botDatabase['testToken'],botDatabase['realToken']]
 client = discord.Client()
 bot = commands.Bot(command_prefix='-', description="Fortnite Bot made by th3infinity#6720")
-url = "https://api.fortnitetracker.com/v1/profile/{}/{}"
-cmgurl = "https://www.checkmategaming.com/tournament/pc/fortnite/-80-free-amateur-global-2v2-fortnite-br-1nd-{}-{}"
 headers = {"TRN-Api-Key": botDatabase['trnKey']}
-platforms = ['pc', 'psn', 'xbl']
-roles = ['80%+', '70%', '60%', '50%', '40%', '30%', '25%', '20%', '15%', '10%']
-maint = False
 localTimezone = tz.tzlocal()
 
 hdr = {
@@ -107,9 +102,9 @@ def saveDatabase():
 @bot.command(hidden=True, pass_context=True, name='maintenance', aliases=['maint', 'mt'])
 @commands.check(is_developer)
 async def maintenance(ctx):
-    global maint
-    maint = not maint
-    if maint:
+    #global variables.maint
+    variables.maint = not variables.maint
+    if variables.maint:
         answer = 'Bot Maintenance wurde aktiviert!'
     else:
         answer = 'Bot Maintenance wurde deaktiviert!'
@@ -421,12 +416,12 @@ async def disableRank(ctx):
 @commands.check(is_allowedchannel)
 async def rank(ctx, platform='remove', *all):
     guildID = str(ctx.message.guild.id)
-    if not botDatabase[guildID]['rankDisabled'] and not maint or is_developer(ctx):
+    if not botDatabase[guildID]['rankDisabled'] and not variables.maint or is_developer(ctx):
         name = ' '.join(all)
         logger.info('Command -rank from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
         if platform.lower() == 'remove':
             for r in ctx.message.author.roles:
-                if r.name in roles:
+                if r.name in variables.roles:
                     await ctx.message.author.remove_roles(r)
                 if r.name == 'Alte Season':
                     await ctx.message.author.remove_roles(r)
@@ -444,9 +439,9 @@ async def rank(ctx, platform='remove', *all):
             embed_noname.set_footer(text=variables.footerText)
             logger.error('No Accname give')
             await ctx.send(embed=embed_noname)
-        elif platform.lower() not in platforms:
+        elif platform.lower() not in variables.platforms:
             embed_platform = discord.Embed(title='Win Rate Rank',
-                                           description='Ungültige Plattform! <' + ', '.join(platforms) + '>', color=0xFF0000)
+                                           description='Ungültige Plattform! <' + ', '.join(variables.platforms) + '>', color=0xFF0000)
             embed_platform.set_footer(text=variables.footerText)
 
             logger.error('No valid Mode: ' + platform)
@@ -538,7 +533,7 @@ async def rank(ctx, platform='remove', *all):
 
                     if overten:
                         for r in ctx.message.author.roles:
-                            if r.name in roles:
+                            if r.name in variables.roles:
                                 await ctx.message.author.remove_roles(r)
                             if r.name == 'Alte Season':
                                 await ctx.message.author.remove_roles(r)
@@ -609,7 +604,7 @@ async def rank(ctx, platform='remove', *all):
 
                     if overten:
                         for r in ctx.message.author.roles:
-                            if r.name in roles:
+                            if r.name in variables.roles:
                                 await ctx.message.author.remove_roles(r)
                         await ctx.message.author.add_roles(role)
                         await ctx.message.author.add_roles(
@@ -663,7 +658,7 @@ async def rank(ctx, platform='remove', *all):
                                     description='Rangvergabe aktuell deaktiviert! Für Updates wende dich an ein Teammitglied oder schau in die Info Channel',
                                     color=0xE88100)
         embed_maint.set_footer(text=variables.footerText)
-        if maint:
+        if variables.roles:
             embed_maint.description = 'Bot befindet sich im Maintenance Modus! Rangvergabe deaktiviert. Bitte warten.'
         await ctx.send(embed=embed_maint)
 
@@ -673,7 +668,7 @@ async def rank(ctx, platform='remove', *all):
 @commands.check(is_allowed)
 async def autoRank(ctx, role: commands.RoleConverter):
     guildID = str(ctx.message.guild.id)
-    if not botDatabase[guildID]['rankDisabled'] and not maint or is_developer(ctx):
+    if not botDatabase[guildID]['rankDisabled'] and not variables.roles or is_developer(ctx):
         logger.info('Command -autoRank from User: ' + str(ctx.message.author.id) + " in Server " + ctx.message.guild.name + "(" + guildID + ")")
         count_found = 0
         count_notfound = 0
@@ -733,7 +728,7 @@ async def autoRank(ctx, role: commands.RoleConverter):
 
                     if overten:
                         for r in member.roles:
-                            if r.name in roles:
+                            if r.name in variables.roles:
                                 await member.remove_roles(r)
                             if r.name == 'Alte Season':
                                 await member.remove_roles(r)
@@ -795,7 +790,7 @@ async def autoRank(ctx, role: commands.RoleConverter):
 
                     if overten:
                         for r in member.roles:
-                            if r.name in roles:
+                            if r.name in variables.roles:
                                 await member.remove_roles(r)
                         await member.add_roles(role)
                         await member.add_roles(
@@ -844,7 +839,7 @@ async def autoRank(ctx, role: commands.RoleConverter):
                                     description='Rangvergabe aktuell deaktiviert! Für Updates wende dich an ein Teammitglied oder schau in die Info Channel',
                                     color=0xE88100)
         embed_maint.set_footer(text=variables.footerText)
-        if maint:
+        if variables.roles:
             embed_maint.description = 'Bot befindet sich im Maintenance Modus! Rangvergabe deaktiviert. Bitte warten.'
         await ctx.send(embed=embed_maint)
 
@@ -888,7 +883,7 @@ async def getStats(ctx, name, platform, nameConvention=True):
     duostats_old = {"kills": 0, "wins": 0, "matches": 0, "kd": 0, "winRatio": 0}
     squadstats_old = {"kills": 0, "wins": 0, "matches": 0, "kd": 0, "winRatio": 0}
 
-    resp = requests.get(url.format(platform.lower(), name), headers=headers)
+    resp = requests.get(variables.url.format(platform.lower(), name), headers=headers)
 
     response = json.loads(resp.text)
 
@@ -1027,7 +1022,7 @@ async def rank_on_error(ctx, error):
         logger.error('Missing Arguments for command rank (' + str(
             ctx.message.content) + ') from User: ' + ctx.message.author.name)
         embed = discord.Embed(title='Win Rate Rank',
-                              description='Fehlendes Argument! `-rank <' + ', '.join(platforms) + '> <epicGamesName>`',
+                              description='Fehlendes Argument! `-rank <' + ', '.join(variables.platforms) + '> <epicGamesName>`',
                               color=0xFF0000)
         embed.set_footer(text=variables.footerText, icon_url='https://i.imgur.com/MrWPGaB.png')
         await ctx.send(embed=embed)
@@ -1251,7 +1246,7 @@ def getCMGTournaments(guildID):
     while nexttournament:
         lasttournament += 3
 
-        t_link = cmgurl.format(lasttournament,lasttournament + 33589)
+        t_link = variables.cmgurl.format(lasttournament,lasttournament + 33589)
         resp = requests.get(t_link, headers=hdr)
         file = open("respons.txt", "w",encoding='utf-8')
         file.write(resp.text)
