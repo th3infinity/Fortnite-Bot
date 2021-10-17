@@ -28,6 +28,7 @@ platforms = ['pc', 'psn', 'xbl']
 roles = ['80%+', '70%', '60%', '50%', '40%', '30%', '25%', '20%', '15%', '10%']
 maint = False
 localTimezone = tz.tzlocal()
+debug = False
 
 hdr = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36',
@@ -851,7 +852,8 @@ async def autoRank(ctx, role: commands.RoleConverter):
 
 @autoRank.error
 async def autoRank_on_error(ctx, error):
-    #print(error)
+    if (debug):
+        print(error)
     if isinstance(error, commands.MissingRequiredArgument):
         logger.error('Missing Arguments for command autoRank (' + str(
             ctx.message.content) + ') from User: ' + ctx.message.author.name)
