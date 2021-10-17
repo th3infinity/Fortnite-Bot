@@ -5,6 +5,12 @@ botID = 470506590647091211 #TestBot
 changeLog = []
 debug = False
 
+url = "https://api.fortnitetracker.com/v1/profile/{}/{}"
+cmgurl = "https://www.checkmategaming.com/tournament/pc/fortnite/-80-free-amateur-global-2v2-fortnite-br-1nd-{}-{}"
+platforms = ['pc', 'psn', 'xbl']
+roles = ['80%+', '70%', '60%', '50%', '40%', '30%', '25%', '20%', '15%', '10%']
+maint = False
+
 class Version:
     nr = "0"
     date = ""
