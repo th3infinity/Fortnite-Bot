@@ -851,7 +851,7 @@ async def autoRank(ctx, role: commands.RoleConverter):
 
 @autoRank.error
 async def autoRank_on_error(ctx, error):
-    if (debug):
+    if (variables.debug):
         print(error)
     if isinstance(error, commands.MissingRequiredArgument):
         logger.error('Missing Arguments for command autoRank (' + str(
@@ -892,7 +892,7 @@ async def getStats(ctx, name, platform, nameConvention=True):
 
     response = json.loads(resp.text)
 
-    if (debug):
+    if (variables.debug):
         print(response)
 
     try:
@@ -1167,7 +1167,7 @@ def getEGLTournaments():
                                            timestr, 'Unbekannt', 'Free', link, slots[0],
                                            t_id)
                 egl_tournaments.append(newtournament)
-                if (debug):
+                if (variables.debug):
                     print(newtournament.id)
                     print(newtournament.name)
                     print(newtournament.time)
@@ -1229,7 +1229,7 @@ def getUMGTournaments():
         if t_id not in saveList and int(costs[0]) == 0:
             newtournament = Tournament(name[0], format(time,'%d/%m/%y - %H:%M Uhr'), format(t_reg,'%d/%m/%y - %H:%M Uhr'), costs[0] + ' Credits',link,slots[0],t_id)
             umg_tournaments.append(newtournament)
-            if (debug):
+            if (variables.debug):
                 print(newtournament.id)
                 print(newtournament.name)
                 print(newtournament.time)
@@ -1295,7 +1295,7 @@ def getCMGTournaments(guildID):
         if t_id not in saveList and t_time > datetime.now():
             newtournament = Tournament(t_name,format(t_time,'%d/%m/%y - %H:%M Uhr'),format(t_reg,'%d/%m/%y - %H:%M Uhr'),t_costs,t_link,t_slots,t_id)
             cmg_tournaments.append(newtournament)
-            if (debug):
+            if (variables.debug):
                 print(newtournament.id)
                 print(newtournament.name)
                 print(newtournament.time)
@@ -1396,7 +1396,7 @@ def setup_custom_logger(name):
     screen_handler = logging.StreamHandler(stream=sys.stdout)
     screen_handler.setFormatter(formatter)
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.variables.debug)
     logger.addHandler(handler)
     logger.addHandler(screen_handler)
     return logger
