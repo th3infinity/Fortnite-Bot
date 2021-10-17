@@ -893,7 +893,8 @@ async def getStats(ctx, name, platform, nameConvention=True):
 
     response = json.loads(resp.text)
 
-    #print(response)
+    if (debug):
+        print(response)
 
     try:
         accname = response["epicUserHandle"]
@@ -1167,12 +1168,13 @@ def getEGLTournaments():
                                            timestr, 'Unbekannt', 'Free', link, slots[0],
                                            t_id)
                 egl_tournaments.append(newtournament)
-                #print(newtournament.id)
-                #print(newtournament.name)
-                #print(newtournament.time)
-                #print(newtournament.costs)
-                #print(newtournament.link)
-                #print(newtournament.slots)
+                if (debug):
+                    print(newtournament.id)
+                    print(newtournament.name)
+                    print(newtournament.time)
+                    print(newtournament.costs)
+                    print(newtournament.link)
+                    print(newtournament.slots)
 
 
 def getUMGTournaments():
@@ -1228,12 +1230,13 @@ def getUMGTournaments():
         if t_id not in saveList and int(costs[0]) == 0:
             newtournament = Tournament(name[0], format(time,'%d/%m/%y - %H:%M Uhr'), format(t_reg,'%d/%m/%y - %H:%M Uhr'), costs[0] + ' Credits',link,slots[0],t_id)
             umg_tournaments.append(newtournament)
-            #print(newtournament.id)
-            #print(newtournament.name)
-            #print(newtournament.time)
-            #print(newtournament.costs)
-            #print(newtournament.link)
-            #print(newtournament.slots)
+            if (debug):
+                print(newtournament.id)
+                print(newtournament.name)
+                print(newtournament.time)
+                print(newtournament.costs)
+                print(newtournament.link)
+                print(newtournament.slots)
 
 
 def getCMGTournaments(guildID):
@@ -1293,13 +1296,14 @@ def getCMGTournaments(guildID):
         if t_id not in saveList and t_time > datetime.now():
             newtournament = Tournament(t_name,format(t_time,'%d/%m/%y - %H:%M Uhr'),format(t_reg,'%d/%m/%y - %H:%M Uhr'),t_costs,t_link,t_slots,t_id)
             cmg_tournaments.append(newtournament)
-            #print(newtournament.id)
-            #print(newtournament.name)
-            #print(newtournament.time)
-            #print(newtournament.reg)
-            #print(newtournament.costs)
-            #print(newtournament.link)
-            #print(newtournament.slots)
+            if (debug):
+                print(newtournament.id)
+                print(newtournament.name)
+                print(newtournament.time)
+                print(newtournament.reg)
+                print(newtournament.costs)
+                print(newtournament.link)
+                print(newtournament.slots)
 
     botDatabase[guildID]['lastcmg'] = lasttournament - 3
     saveDatabase()
