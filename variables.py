@@ -1,3 +1,5 @@
+from model import Version
+
 developerID = 198844841977708545
 footerText = 'made with ♥ by th3infinity#6720'
 botID = 470506590647091211 #TestBot
@@ -19,15 +21,6 @@ hdr = {
         'Accept-Language': 'de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7',
         'Connection': 'keep-alive'}
 
-class Version:
-    nr = "0"
-    date = ""
-    changes = ""
- 
-    def __init__(self, nr, date, changes):
-        self.nr = nr
-        self.date = date
-        self.changes = changes
 
 _version1 = Version("0.4.3", "2018-09-29", " - added winrate to output")
 changeLog.append(_version1)
