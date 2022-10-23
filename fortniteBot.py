@@ -1242,9 +1242,10 @@ def getCMGTournaments(guildID):
 
         t_link = variables.cmgurl.format(lasttournament,lasttournament + 33589)
         resp = requests.get(t_link, headers=variables.hdr)
-        file = open("respons.txt", "w",encoding='utf-8')
-        file.write(resp.text)
-        file.close()
+        if (variables.debug):
+            file = open("respons.txt", "w",encoding='utf-8')
+            file.write(resp.text)
+            file.close()
         tree = html.fromstring(resp.content)
 
         t_values = tree.xpath('//div[@class="tournament-panel-value"]/text()')
