@@ -11,6 +11,7 @@ from discord.ext import commands
 from lxml import html
 from datetime import datetime,timedelta
 from dateutil import tz
+from model import Tournament
 
 with open("database.txt","r") as databaseFile:
     if os.stat("database.txt").st_size == 0:
@@ -23,23 +24,6 @@ client = discord.Client()
 bot = commands.Bot(command_prefix='-', description="Fortnite Bot made by th3infinity#6720")
 headers = {"TRN-Api-Key": botDatabase['trnKey']}
 localTimezone = tz.tzlocal()
-
-
-
-###Tournaments Stuff
-class Tournament:
-    next_id = 0
-
-    def __init__(self,t_name,t_time,t_reg,t_costs,t_link,t_slots,t_id):
-        self.id = Tournament.next_id
-        Tournament.next_id += 1
-        self.name = t_name
-        self.time = t_time
-        self.reg = t_reg
-        self.costs = t_costs
-        self.link = t_link
-        self.slots = t_slots
-        self.tid = t_id
 
 
 umg_tournaments = []
