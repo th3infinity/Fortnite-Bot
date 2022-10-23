@@ -24,13 +24,7 @@ bot = commands.Bot(command_prefix='-', description="Fortnite Bot made by th3infi
 headers = {"TRN-Api-Key": botDatabase['trnKey']}
 localTimezone = tz.tzlocal()
 
-hdr = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Connection': 'keep-alive'}
+
 
 ###Tournaments Stuff
 class Tournament:
@@ -1247,7 +1241,7 @@ def getCMGTournaments(guildID):
         lasttournament += 3
 
         t_link = variables.cmgurl.format(lasttournament,lasttournament + 33589)
-        resp = requests.get(t_link, headers=hdr)
+        resp = requests.get(t_link, headers=variables.hdr)
         file = open("respons.txt", "w",encoding='utf-8')
         file.write(resp.text)
         file.close()
