@@ -1,4 +1,5 @@
 from model import Version
+from dateutil import tz
 
 developerID = 198844841977708545
 footerText = 'made with ♥ by th3infinity#6720'
@@ -21,6 +22,11 @@ hdr = {
         'Accept-Language': 'de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7',
         'Connection': 'keep-alive'}
 
+localTimezone = tz.tzlocal()
+
+umg_tournaments = []
+egl_tournaments = []
+cmg_tournaments = []
 
 _version1 = Version("0.4.3", "2018-09-29", " - added winrate to output")
 changeLog.append(_version1)

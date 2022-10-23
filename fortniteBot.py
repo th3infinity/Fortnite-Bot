@@ -10,7 +10,6 @@ from time import localtime, strftime
 from discord.ext import commands
 from lxml import html
 from datetime import datetime,timedelta
-from dateutil import tz
 from model import Tournament
 
 with open("database.txt","r") as databaseFile:
@@ -23,12 +22,6 @@ TOKEN = [botDatabase['testToken'],botDatabase['realToken']]
 client = discord.Client()
 bot = commands.Bot(command_prefix='-', description="Fortnite Bot made by th3infinity#6720")
 headers = {"TRN-Api-Key": botDatabase['trnKey']}
-localTimezone = tz.tzlocal()
-
-
-umg_tournaments = []
-egl_tournaments = []
-cmg_tournaments = []
 
 def has_any_role(member, roles):
     memberroles = []
@@ -1028,7 +1021,7 @@ async def getTournaments(ctx):
 
     tournamentsupdated = 0
 
-    for egl_t in egl_tournaments:
+    for egl_t in variables.egl_tournaments:
         if egl_t.tid not in egl_posted:
 
             tournamentEmbed = discord.Embed(title=egl_t.name,url=egl_t.link, color=0xFFCA34)
@@ -1045,7 +1038,7 @@ async def getTournaments(ctx):
 
     botDatabase[guildID]["egl_posted"] = egl_posted
 
-    for umg_t in umg_tournaments:
+    for umg_t in variables.umg_tournaments:
         if umg_t.tid not in umg_posted:
 
             tournamentEmbed = discord.Embed(title=umg_t.name,url=umg_t.link, color=0x202C39)
@@ -1064,7 +1057,7 @@ async def getTournaments(ctx):
 
     saveDatabase()
 
-    """for cmg_t in cmg_tournaments:
+    """for cmg_t in variables.cmg_tournaments:
         tournamentsupdated += 1
         tournamentEmbed = discord.Embed(title=cmg_t.name,url=cmg_t.link, color=0x96E4F1)
         tournamentEmbed.set_thumbnail(url="https://i.imgur.com/uzqFCp0.png")
@@ -1088,7 +1081,7 @@ def getEGLTournaments():
 
     saveList = []
 
-    for tournament in egl_tournaments:
+    for tournament in variables.egl_tournaments:
         saveList.append(tournament.tid)
 
     for element in gameBoxes:
@@ -1139,7 +1132,7 @@ def getEGLTournaments():
                 newtournament = Tournament(name[0] + ' - ' + details[0],
                                            timestr, 'Unbekannt', 'Free', link, slots[0],
                                            t_id)
-                egl_tournaments.append(newtournament)
+                variables.egl_tournaments.append(newtournament)
                 if (variables.debug):
                     print(newtournament.id)
                     print(newtournament.name)
@@ -1157,7 +1150,7 @@ def getUMGTournaments():
 
     saveList = []
 
-    for tournament in umg_tournaments:
+    for tournament in variables.umg_tournaments:
         saveList.append(tournament.tid)
 
     for element in gameBoxes:
@@ -1201,7 +1194,7 @@ def getUMGTournaments():
 
         if t_id not in saveList and int(costs[0]) == 0:
             newtournament = Tournament(name[0], format(time,'%d/%m/%y - %H:%M Uhr'), format(t_reg,'%d/%m/%y - %H:%M Uhr'), costs[0] + ' Credits',link,slots[0],t_id)
-            umg_tournaments.append(newtournament)
+            variables.umg_tournaments.append(newtournament)
             if (variables.debug):
                 print(newtournament.id)
                 print(newtournament.name)
@@ -1216,7 +1209,7 @@ def getCMGTournaments(guildID):
 
     saveList = []
 
-    for tournament in cmg_tournaments:
+    for tournament in variables.cmg_tournaments:
         saveList.append(tournament.tid)
     global nexttournament
     nexttournament = True
@@ -1268,7 +1261,7 @@ def getCMGTournaments(guildID):
 
         if t_id not in saveList and t_time > datetime.now():
             newtournament = Tournament(t_name,format(t_time,'%d/%m/%y - %H:%M Uhr'),format(t_reg,'%d/%m/%y - %H:%M Uhr'),t_costs,t_link,t_slots,t_id)
-            cmg_tournaments.append(newtournament)
+            variables.cmg_tournaments.append(newtournament)
             if (variables.debug):
                 print(newtournament.id)
                 print(newtournament.name)
